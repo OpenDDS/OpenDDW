@@ -36,7 +36,7 @@ else()
   target_compile_features(OpenDDW PRIVATE cxx_std_17)
 endif()
 
-target_compile_options(OpenDDW PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -Wall -pedantic -Wno-unused> $<$<CXX_COMPILER_ID:MSVC>: /W4>)
+target_compile_options(OpenDDW PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wpedantic -Wno-unused> $<$<CXX_COMPILER_ID:MSVC>: /W4>)
 
 set(OPENDDS_TARGETS
   OpenDDS::OpenDDS
