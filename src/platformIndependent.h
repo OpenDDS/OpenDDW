@@ -19,7 +19,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
-#include "filesystem.hpp"
+
+#include "filesystem.h"
 
 #ifdef WIN32
 #define NOMINMAX

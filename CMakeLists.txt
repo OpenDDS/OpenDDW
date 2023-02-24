@@ -4,24 +4,31 @@ project(OpenDDW VERSION 0.0.1 LANGUAGES CXX)
 
 find_package(OpenDDS REQUIRED)
 
+if (NOT EXISTS ${OPENDDW_ROOT})
+  set (OPENDDW_ROOT ${CMAKE_SOURCE_DIR})
+endif()
+
+set(OPENDDW_INCLUDE_DIR ${OPENDDW_ROOT}/src)
+
 set(MANAGER_HEADER
-  src/dds_callback.h
-  src/dds_listeners.h
-  src/dds_logging.h
-  src/dds_manager.h
-  src/filesystem.hpp
-  src/participant_monitor.h
-  src/platformIndependent.h
-  src/qos_dictionary.h
+  ${OPENDDW_ROOT}/src/dds_callback.h
+  ${OPENDDW_ROOT}/src/dds_listeners.h
+  ${OPENDDW_ROOT}/src/dds_logging.h
+  ${OPENDDW_ROOT}/src/dds_manager.h
+  ${OPENDDW_ROOT}/src/dds_simple.h
+  ${OPENDDW_ROOT}/src/filesystem.h
+  ${OPENDDW_ROOT}/src/participant_monitor.h
+  ${OPENDDW_ROOT}/src/platformIndependent.h
+  ${OPENDDW_ROOT}/src/qos_dictionary.h
 )
 
 set(MANAGER_SOURCE
-  src/dds_callback.cpp
-  src/dds_listeners.cpp
-  src/dds_logging.cpp
-  src/dds_manager.cpp
-  src/participant_monitor.cpp
-  src/qos_dictionary.cpp
+  ${OPENDDW_ROOT}/src/dds_callback.cpp
+  ${OPENDDW_ROOT}/src/dds_listeners.cpp
+  ${OPENDDW_ROOT}/src/dds_logging.cpp
+  ${OPENDDW_ROOT}/src/dds_manager.cpp
+  ${OPENDDW_ROOT}/src/participant_monitor.cpp
+  ${OPENDDW_ROOT}/src/qos_dictionary.cpp
 )
 
 add_library(manager
