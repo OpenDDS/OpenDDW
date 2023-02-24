@@ -1,5 +1,5 @@
 ---
-name: "opendds-monitor CI"
+name: "OpenDDW CI"
 on:
   pull_request:
     branches:
