@@ -222,11 +222,6 @@ jobs:
           cd build
           cmake ..
           cmake --build .
-      - name: 'Build Qwt (Windows)'
-        if: runner.os == 'Windows'
-        shell: cmd
-        run: |-
-          cmake -DBUILD_TYPE=debug -DVCPKG_INSTALLED_DIR=%VCPKG_INSTALLED_DIR% -DVCPKG_DEFAULT_TRIPLET=%VCPKG_DEFAULT_TRIPLET% -P BuildQwt.cmake
       - name: 'Build opendds-monitor (Windows)'
         if: runner.os == 'Windows'
         shell: cmd
