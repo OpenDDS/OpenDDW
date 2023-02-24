@@ -35,7 +35,7 @@ jobs:
 
     steps:
       # Clone git repositories
-      - name: 'Checkout opendds-monitor'
+      - name: 'Checkout OpenDDW'
         uses: actions/checkout@v3
       - name: 'Checkout MPC'
         uses: actions/checkout@v3
@@ -204,14 +204,14 @@ jobs:
           cd OpenDDS
           perl tools/scripts/show_build_config.pl
 
-      # Build opendds-monitor
+      # Build OpenDDW
       - name: 'Set Up Problem Matcher (Windows)'
         if: runner.os == 'Windows'
         uses: ammaraskar/msvc-problem-matcher@0.2.0
       - name: 'Set Up Problem Matcher (Linux / macOS)'
         if: runner.os == 'Linux' || runner.os == 'macOS'
         uses: ammaraskar/gcc-problem-matcher@0.2.0
-      - name: 'Build opendds-monitor (Linux / macOS)'
+      - name: 'Build OpenDDW (Linux / macOS)'
         if: runner.os == 'Linux' || runner.os == 'macOS'
         shell: bash
         run: |-
@@ -222,7 +222,7 @@ jobs:
           cd build
           cmake ..
           cmake --build .
-      - name: 'Build opendds-monitor (Windows)'
+      - name: 'Build OpenDDW (Windows)'
         if: runner.os == 'Windows'
         shell: cmd
         run: |-
