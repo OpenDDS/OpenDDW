@@ -244,93 +244,151 @@ public:
     // This function waits until it finds one (or more) Subscriber of topic T OR secondsToWait seconds expires.
     // Useful when making sure your messages are being Published on a certain topic.
     template <class T>
-    bool WaitForSubscriber(int secondsToWait = 2)
+	bool WaitForSubscriber(std::chrono::milliseconds timeToWait = std::chrono::seconds(2))
+	{
+		return GetNumberOfSubscribers<T>(1, timeToWait) > 0;
+	}
+
+	//Call WaitForPublisher(0) if you have already been discovered and want to see if you've lost all connection to publishers.
+	// readerName is not required unless user specifies a readerName when creating their Subscriber / Callback
+	template <class T>
+	bool WaitForPublisher(std::chrono::milliseconds timeToWait = std::chrono::seconds(2), std::string readerName = "")
     {
+		return GetNumberOfPublishers<T>(1, timeToWait, readerName) > 0;
+	}
+
+	// Function that will wait until [max_wait] passes or until we find [min_count] number of Subscribers, whichever is faster
+	template<class T>
+	int GetNumberOfSubscribers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(2))
+	{
+		const std::chrono::milliseconds waitIncriment(100);
+		std::chrono::milliseconds timeWaited(0);
+		auto startTime = std::chrono::system_clock::now();
+		std::string topic_name = typeid(T).name();
         try {
             decltype(m_sharedLock) lck(mutex_shr);
-            auto iter = m_pubMap.find(typeid(T).name());
+			auto iter = m_pubMap.find(topic_name);
+
+			std::stringstream sstr;
             if (iter == m_pubMap.end()) {
+				sstr << "No Publisher found for: " << topic_name << ".";
+				m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
+
+			sstr << "Waiting a max of " << max_wait.count() << " ms for " << min_count << " Subscriber(s) of topic: " << topic_name << ".";
+			m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+			sstr.flush();
+
             std::string temp = iter->second;
             lck.unlock();
             auto dw = getWriter(temp);
 
             if (dw == nullptr) {
-                //l.error("Found no writer for DDS type: %s.", typeid(T).name());
-                //printf("Found no writer for DDS type: %s.\n", typeid(T).name());
+				sstr << "No writer found for: " << topic_name << ".";
+				m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
 
             DDS::PublicationMatchedStatus pubStatus;
             pubStatus.current_count = 0;
 
-            //We will try for 2 seconds.
-            for (int i = 0; i < secondsToWait * 10 + 1; ++i) {
-                //Must pull status repeatedly
+			//Initial check for publishers
                 dw->get_publication_matched_status(pubStatus);
+			if (pubStatus.current_count >= min_count) {
+				return pubStatus.current_count;
+			}
 
-                //l.info("Subscriber count = %d", pubStatus.current_count);
-                //Wait until someone is actually listening for our topic
-                if (pubStatus.current_count > 0) { //Does it have to be more than 1?
-                    return true;
+			//Check for a publisher until out ot time
+			while (timeWaited < max_wait) {
+				//Sleep for the incriment time
+				std::this_thread::sleep_for(waitIncriment);
+				timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
+
+				dw->get_publication_matched_status(pubStatus);
+				if (pubStatus.current_count >= min_count) {
+					return pubStatus.current_count;
+				}
                 }
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
+			sstr << "Failed to find " << min_count << " Subscribers(s)... Only found " << pubStatus.current_count;
+			m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+
+			return pubStatus.current_count;
         }
         catch (...) {
-            //LOGGER::Logger l;
-            //l.error("Trying to wait on discovery for a DDS type that has no topic mapped: %s.", typeid(T).name());
-            return false;
+			std::stringstream sstr;
+			sstr << "Error thrown waiting for subscriber(s) for: " << topic_name << ".";
+			m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
         }
-        return false;
+		return 0;
     }
 
-    //Call WaitForPublisher(0) if you have already been discovered and want to see if you've lost all connection to publishers.
-    // readerName is not required unless user specifies a readerName when creating their Subscriber / Callback
+	// Function that will wait until [max_wait] passes or until we find [min_count] number of Publishers, whichever is faster
     template <class T>
-    bool WaitForPublisher(int secondsToWait = 2, std::string readerName = "")
+	int GetNumberOfPublishers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(2), std::string reader_name = "")
     {
+		const std::chrono::milliseconds waitIncriment(100);
+		std::chrono::milliseconds timeWaited(0);
+		auto startTime = std::chrono::system_clock::now();
+		std::string topic_name = typeid(T).name();
+
         try {
             decltype(m_sharedLock) lck(mutex_shr);
-            auto iter = m_subMap.find(typeid(T).name());
+			auto iter = m_subMap.find(topic_name);
+
+			std::stringstream sstr;
             if (iter == m_subMap.end()) {
+				sstr << "No subscriber found for: " << topic_name << ".";
+				m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
+
+			sstr << "Waiting a max of " << max_wait.count() << " ms for " << min_count << " Publisher(s) of topic: " << topic_name << ".";
+			m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+			sstr.flush();
+
             std::string temp = iter->second;
             lck.unlock();
 
-            auto dr = getReader(temp, GenerateReaderName(temp, readerName)); // Reader name == Topic name + "Reader", unless user-specified
+			auto dr = getReader(temp, GenerateReaderName(temp, reader_name)); // Reader name == Topic name + "Reader", unless user-specified
 
             if (dr == nullptr) {
-                //l.error("Found no writer for DDS type: %s.", typeid(T).name());
-                //printf("Found no writer for DDS type: %s.\n", typeid(T).name());
+				sstr << "No reader found for: " << topic_name << ".";
+				m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
             DDS::SubscriptionMatchedStatus subStatus;
             subStatus.current_count = 0;
 
-            //We will try for 2 seconds.
-            for (int i = 0; i < secondsToWait * 10 + 1; ++i) {
-                //Must pull status repeatedly
+			//Initial subscriber check
                 dr->get_subscription_matched_status(subStatus);
+			if (subStatus.current_count >= min_count) {
+				return subStatus.current_count;
+			}
 
-                //l.info("Subscriber count = %d", pubStatus.current_count);
-                //Wait until someone is actually listening for our topic
-                if (subStatus.current_count > 0) { //Does it have to be more than 1?
-                    return true;
+			//Check for a subscriber until out of time
+			while (timeWaited < max_wait) {
+				std::this_thread::sleep_for(waitIncriment);
+				timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
+
+				dr->get_subscription_matched_status(subStatus);
+				if (subStatus.current_count >= min_count) {
+					return subStatus.current_count;
+				}
                 }
+			sstr << "Failed to find " << min_count << " Publisher(s)... Only found " << subStatus.current_count;
+			m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
+			return subStatus.current_count;
         }
         catch (...) {
-            //LOGGER::Logger l;
-            //l.error("Trying to wait on discovery for a DDS type that has no topic mapped: %s.", typeid(T).name());
-            return false;
+			std::stringstream sstr;
+			sstr << "Error thrown waiting for publisher for: " << topic_name << ".";
+			m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
         }
-        return false;
+
+		return 0;
     }
 
     void EventID(int id) { m_eventID = id; }
