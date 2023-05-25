@@ -95,16 +95,16 @@ public:
 
         //ProcessLockGuard lock(m_initMutex);
 
-        if(false == registerTopic<T>(topicName, qos))
+        if (false == registerTopic<T>(topicName, qos))
         {
             //If a topic has already been registered, this will fail but it should not stop us from continuing
         }
-        if(false == createPublisher(topicName))
+        if (false == createPublisher(topicName))
         {
             return false;
         }
 
-            decltype(m_uniqueLock) lck(mutex_shr);
+        decltype(m_uniqueLock) lck(mutex_shr);
         //Let's try something sneaky, so we don't have to pass topicName when we write DDS messages
         m_pubMap[typeid(T).name()] = topicName;
         return true;
@@ -131,16 +131,16 @@ public:
     ///            std::bind(&ExampleReceiver::onMessage, dataReceiver, std::placeholders::_1), filterByComputer);
     ///Note that async handling is set to true in this function, while addCallback defaults to false.
     template <typename TopicType>
-        bool Callback(std::string topicName, const STD_QOS::QosType qos, std::function<void(const TopicType&)> func,
+    bool Callback(std::string topicName, const STD_QOS::QosType qos, std::function<void(const TopicType&)> func,
         std::string filter = "", const bool& asyncHandling = true, std::string readerName = "")
     {
         std::string rName = GenerateReaderName(topicName, readerName);
 
-        if(false == registerTopic<TopicType>(topicName, qos))
+        if (false == registerTopic<TopicType>(topicName, qos))
         {
             //If a topic has already been registered, this will fail but it should not stop us from continuing
         }
-        if(false == createSubscriber(topicName, rName, filter))
+        if (false == createSubscriber(topicName, rName, filter))
         {
             std::stringstream sstr;
             sstr << "Failed to create subscriber for topic: " << topicName << ".";
@@ -244,120 +244,178 @@ public:
     // This function waits until it finds one (or more) Subscriber of topic T OR secondsToWait seconds expires.
     // Useful when making sure your messages are being Published on a certain topic.
     template <class T>
-    bool WaitForSubscriber(int secondsToWait = 2)
+    bool WaitForSubscriber(std::chrono::milliseconds timeToWait = std::chrono::seconds(2))
     {
+        return GetNumberOfSubscribers<T>(1, timeToWait) > 0;
+    }
+
+    //Call WaitForPublisher(0) if you have already been discovered and want to see if you've lost all connection to publishers.
+    // readerName is not required unless user specifies a readerName when creating their Subscriber / Callback
+    template <class T>
+    bool WaitForPublisher(std::chrono::milliseconds timeToWait = std::chrono::seconds(2), std::string readerName = "")
+    {
+        return GetNumberOfPublishers<T>(1, timeToWait, readerName) > 0;
+    }
+
+    // Function that will wait until [max_wait] passes or until we find [min_count] number of Subscribers, whichever is faster
+    template<class T>
+    int GetNumberOfSubscribers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(2))
+    {
+        const std::chrono::milliseconds waitIncriment(100);
+        std::chrono::milliseconds timeWaited(0);
+        auto startTime = std::chrono::steady_clock::now();
+        std::string topic_name = typeid(T).name();
         try {
             decltype(m_sharedLock) lck(mutex_shr);
-            auto iter = m_pubMap.find(typeid(T).name());
+            auto iter = m_pubMap.find(topic_name);
+
+            std::stringstream sstr;
             if (iter == m_pubMap.end()) {
+                sstr << "No Publisher found for: " << topic_name << ".";
+                m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
+
+            sstr << "Waiting a max of " << max_wait.count() << " ms for " << min_count << " Subscriber(s) of topic: " << topic_name << ".";
+            m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+            sstr.flush();
+
             std::string temp = iter->second;
             lck.unlock();
             auto dw = getWriter(temp);
 
             if (dw == nullptr) {
-                //l.error("Found no writer for DDS type: %s.", typeid(T).name());
-                //printf("Found no writer for DDS type: %s.\n", typeid(T).name());
+                sstr << "No writer found for: " << topic_name << ".";
+                m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
 
             DDS::PublicationMatchedStatus pubStatus;
             pubStatus.current_count = 0;
 
-            //We will try for 2 seconds.
-            for (int i = 0; i < secondsToWait * 10 + 1; ++i) {
-                //Must pull status repeatedly
-                dw->get_publication_matched_status(pubStatus);
-
-                //l.info("Subscriber count = %d", pubStatus.current_count);
-                //Wait until someone is actually listening for our topic
-                if (pubStatus.current_count > 0) { //Does it have to be more than 1?
-                    return true;
-                }
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            //Initial check for publishers
+            dw->get_publication_matched_status(pubStatus);
+            if (pubStatus.current_count >= min_count) {
+                return pubStatus.current_count;
             }
+
+            //Check for a publisher until out ot time
+            while (timeWaited < max_wait) {
+                //Sleep for the incriment time
+                std::this_thread::sleep_for(waitIncriment);
+                timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime);
+
+                dw->get_publication_matched_status(pubStatus);
+                if (pubStatus.current_count >= min_count) {
+                    return pubStatus.current_count;
+                }
+            }
+
+            sstr << "Failed to find " << min_count << " Subscribers(s)... Only found " << pubStatus.current_count;
+            m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+
+            return pubStatus.current_count;
         }
         catch (...) {
-            //LOGGER::Logger l;
-            //l.error("Trying to wait on discovery for a DDS type that has no topic mapped: %s.", typeid(T).name());
-            return false;
+            std::stringstream sstr;
+            sstr << "Error thrown waiting for subscriber(s) for: " << topic_name << ".";
+            m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
         }
-        return false;
+        return 0;
     }
 
-    //Call WaitForPublisher(0) if you have already been discovered and want to see if you've lost all connection to publishers.
-    // readerName is not required unless user specifies a readerName when creating their Subscriber / Callback
+    // Function that will wait until [max_wait] passes or until we find [min_count] number of Publishers, whichever is faster
     template <class T>
-    bool WaitForPublisher(int secondsToWait = 2, std::string readerName = "")
+    int GetNumberOfPublishers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(2), std::string reader_name = "")
     {
+        const std::chrono::milliseconds waitIncriment(100);
+        std::chrono::milliseconds timeWaited(0);
+        auto startTime = std::chrono::steady_clock::now();
+        std::string topic_name = typeid(T).name();
+
         try {
             decltype(m_sharedLock) lck(mutex_shr);
-            auto iter = m_subMap.find(typeid(T).name());
+            auto iter = m_subMap.find(topic_name);
+
+            std::stringstream sstr;
             if (iter == m_subMap.end()) {
+                sstr << "No subscriber found for: " << topic_name << ".";
+                m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
+
+            sstr << "Waiting a max of " << max_wait.count() << " ms for " << min_count << " Publisher(s) of topic: " << topic_name << ".";
+            m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+            sstr.flush();
+
             std::string temp = iter->second;
             lck.unlock();
 
-            auto dr = getReader(temp, GenerateReaderName(temp, readerName)); // Reader name == Topic name + "Reader", unless user-specified
+            auto dr = getReader(temp, GenerateReaderName(temp, reader_name)); // Reader name == Topic name + "Reader", unless user-specified
 
             if (dr == nullptr) {
-                //l.error("Found no writer for DDS type: %s.", typeid(T).name());
-                //printf("Found no writer for DDS type: %s.\n", typeid(T).name());
+                sstr << "No reader found for: " << topic_name << ".";
+                m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
                 return false;
             }
             DDS::SubscriptionMatchedStatus subStatus;
             subStatus.current_count = 0;
 
-            //We will try for 2 seconds.
-            for (int i = 0; i < secondsToWait * 10 + 1; ++i) {
-                //Must pull status repeatedly
-                dr->get_subscription_matched_status(subStatus);
-
-                //l.info("Subscriber count = %d", pubStatus.current_count);
-                //Wait until someone is actually listening for our topic
-                if (subStatus.current_count > 0) { //Does it have to be more than 1?
-                    return true;
-                }
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            //Initial subscriber check
+            dr->get_subscription_matched_status(subStatus);
+            if (subStatus.current_count >= min_count) {
+                return subStatus.current_count;
             }
+
+            //Check for a subscriber until out of time
+            while (timeWaited < max_wait) {
+                std::this_thread::sleep_for(waitIncriment);
+                timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime);
+
+                dr->get_subscription_matched_status(subStatus);
+                if (subStatus.current_count >= min_count) {
+                    return subStatus.current_count;
+                }
+            }
+            sstr << "Failed to find " << min_count << " Publisher(s)... Only found " << subStatus.current_count;
+            m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
+
+            return subStatus.current_count;
         }
         catch (...) {
-            //LOGGER::Logger l;
-            //l.error("Trying to wait on discovery for a DDS type that has no topic mapped: %s.", typeid(T).name());
-            return false;
+            std::stringstream sstr;
+            sstr << "Error thrown waiting for publisher for: " << topic_name << ".";
+            m_messageHandler(LogMessageType::DDS_ERROR, sstr.str());
         }
-        return false;
+
+        return 0;
     }
 
     void EventID(int id) { m_eventID = id; }
 
     int EventID() { return m_eventID; }
 
-    private:
-        ///If you have settled on a convention where all your messages have an eventID, then you can set
-        ///m_eventID once and use it for every message. If you are talking across multiple eventIDs or don't use
-        ///eventID, then you should not use ddsWrite;
-        int m_eventID;
+private:
+    ///If you have settled on a convention where all your messages have an eventID, then you can set
+    ///m_eventID once and use it for every message. If you are talking across multiple eventIDs or don't use
+    ///eventID, then you should not use ddsWrite;
+    int m_eventID;
 
-        ///This publishing map is built up by calling ddsPublisher. Now you can call ddsWrite
-        ///without having to specify the topicName. UNLESS you are publishing multiple topic names for the same DDS struct
-        std::map<std::string, std::string> m_pubMap;
+    ///This publishing map is built up by calling ddsPublisher. Now you can call ddsWrite
+    ///without having to specify the topicName. UNLESS you are publishing multiple topic names for the same DDS struct
+    std::map<std::string, std::string> m_pubMap;
 
-        ///The subscriber map is built when calling Callback<> or Subscriber<>. It keeps a list of all topics that the manager
-        ///is subscribed to; useful when determining of there is a publisher of a given topic.
-        std::map<std::string, std::string> m_subMap;
+    ///The subscriber map is built when calling Callback<> or Subscriber<>. It keeps a list of all topics that the manager
+    ///is subscribed to; useful when determining of there is a publisher of a given topic.
+    std::map<std::string, std::string> m_subMap;
 #ifdef CANT_SUPPORT_SHARED_MUTEX
-        std::mutex mutex_shr;
-        std::shared_lock<decltype(mutex_shr)> m_sharedLock;
+    std::mutex mutex_shr;
+    std::shared_lock<decltype(mutex_shr)> m_sharedLock;
 #else
-        std::shared_mutex mutex_shr;
-        std::unique_lock<decltype(mutex_shr)> m_sharedLock;
+    std::shared_mutex mutex_shr;
+    std::unique_lock<decltype(mutex_shr)> m_sharedLock;
 #endif
-        std::unique_lock<decltype(mutex_shr)> m_uniqueLock;
+    std::unique_lock<decltype(mutex_shr)> m_uniqueLock;
     // Helper function to help us maintain Subscriber & Callback functions.
     // If readername is empty, create a generic name based on topic name. Otherwise just take the specified name
     inline std::string GenerateReaderName(std::string& topicName, std::string& readerName)
@@ -373,7 +431,7 @@ public:
 //Here are some template functions to help.
 
 template <typename T, typename add>
-void AddToDdsArray(T &arrayInOut, add toAdd)
+void AddToDdsArray(T& arrayInOut, add toAdd)
 {
     bool foundAlready = false;
     for (unsigned int i = 0; i < arrayInOut.length(); ++i) {
@@ -390,7 +448,7 @@ void AddToDdsArray(T &arrayInOut, add toAdd)
 }
 
 template <typename T>
-void AddToDdsArray(T &arrayInOut, std::string toAdd)
+void AddToDdsArray(T& arrayInOut, std::string toAdd)
 {
     bool foundAlready = false;
     for (unsigned int i = 0; i < arrayInOut.length(); ++i) {
@@ -408,7 +466,7 @@ void AddToDdsArray(T &arrayInOut, std::string toAdd)
 }
 
 template <typename T, typename add>
-bool RemoveFromDdsArray(T &arrayInOut, add toRemove)
+bool RemoveFromDdsArray(T& arrayInOut, add toRemove)
 {
     bool foundAlready = false;
     for (unsigned int i = 0; i < arrayInOut.length(); ++i) {
@@ -426,7 +484,7 @@ bool RemoveFromDdsArray(T &arrayInOut, add toRemove)
 }
 
 template <typename T>
-bool RemoveFromDdsArray(T &arrayInOut, std::string toRemove)
+bool RemoveFromDdsArray(T& arrayInOut, std::string toRemove)
 {
     bool foundAlready = false;
     for (unsigned int i = 0; i < arrayInOut.length(); ++i) {
@@ -447,7 +505,7 @@ bool RemoveFromDdsArray(T &arrayInOut, std::string toRemove)
 //Use to compare a number/simple value against a member variable
 //EX: RemoveFromDdsArray(_statusMessage.sessions, eventId, &SCE::sessionInfo::eventID);
 template <typename T, typename Tcompare, typename TMember>
-bool RemoveFromDdsArray(T &arrayInOut, Tcompare toRemove, TMember memberCompare)
+bool RemoveFromDdsArray(T& arrayInOut, Tcompare toRemove, TMember memberCompare)
 {
     bool foundAlready = false;
     for (unsigned int i = 0; i < arrayInOut.length(); ++i) {
