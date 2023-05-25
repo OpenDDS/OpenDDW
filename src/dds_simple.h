@@ -263,7 +263,7 @@ public:
     {
         const std::chrono::milliseconds waitIncriment(100);
         std::chrono::milliseconds timeWaited(0);
-        auto startTime = std::chrono::system_clock::now();
+        auto startTime = std::chrono::steady_clock::now();
         std::string topic_name = typeid(T).name();
         try {
             decltype(m_sharedLock) lck(mutex_shr);
@@ -303,7 +303,7 @@ public:
             while (timeWaited < max_wait) {
                 //Sleep for the incriment time
                 std::this_thread::sleep_for(waitIncriment);
-                timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
+                timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime);
 
                 dw->get_publication_matched_status(pubStatus);
                 if (pubStatus.current_count >= min_count) {
@@ -330,7 +330,7 @@ public:
     {
         const std::chrono::milliseconds waitIncriment(100);
         std::chrono::milliseconds timeWaited(0);
-        auto startTime = std::chrono::system_clock::now();
+        auto startTime = std::chrono::steady_clock::now();
         std::string topic_name = typeid(T).name();
 
         try {
@@ -370,7 +370,7 @@ public:
             //Check for a subscriber until out of time
             while (timeWaited < max_wait) {
                 std::this_thread::sleep_for(waitIncriment);
-                timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - startTime);
+                timeWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime);
 
                 dr->get_subscription_matched_status(subStatus);
                 if (subStatus.current_count >= min_count) {
