@@ -46,6 +46,12 @@ bool DDSManager::registerTopic(const std::string& topicName, const STD_QOS::QosT
     DDS::ReturnCode_t status = DDS::RETCODE_OK;
     decltype(m_sharedLock) shared_lock(m_topicMutex);
 
+    // Make sure the topic actually registered. If not, there was an issue in the config file
+    if (m_domainParticipant == nullptr)
+    {
+        throw std::runtime_error("Failed to initialize domain participant. Is there an error in your OpenDDS.ini file?");
+    }
+
     // If nothing has been created for this topic yet, construct it
     auto iter = m_topics.find(topicName);
     if (iter == m_topics.end())
@@ -83,6 +89,7 @@ bool DDSManager::registerTopic(const std::string& topicName, const STD_QOS::QosT
     CORBA::String_var tn = ts->get_type_name();
     status = ts->register_type(m_domainParticipant, tn.in());
     checkStatus(status, "register_type");
+
     topicGroup->typeName = tn;
 
 
