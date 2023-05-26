@@ -170,7 +170,7 @@ DDS::DestinationOrderQosPolicyKind QosDictionary::getTimestampPolicy()
     if (DDS_DISTRUST_TIMESTAMPS != NULL)
     {
         std::string distrust_val(DDS_DISTRUST_TIMESTAMPS);
-        std::transform(distrust_val.begin(), distrust_val.end(), distrust_val.begin(), ::tolower);
+        std::transform(distrust_val.begin(), distrust_val.end(), distrust_val.begin(), [](char ch) {return static_cast<char>(::tolower(ch)); });
         if ((distrust_val != "") && (distrust_val != "0") && (distrust_val != "false"))
         {
             distrust_timestamps = true;
@@ -224,7 +224,7 @@ DDS::DataRepresentationId_t QosDictionary::getDataRepresentationType()
     if (DDS_USE_OLD_CDR != NULL)
     {
         std::string old_cdr_val(DDS_USE_OLD_CDR);
-        std::transform(old_cdr_val.begin(), old_cdr_val.end(), old_cdr_val.begin(), ::tolower);
+        std::transform(old_cdr_val.begin(), old_cdr_val.end(), old_cdr_val.begin(), [](char ch) {return static_cast<char>(::tolower(ch)); });
         if ((old_cdr_val != "") && (old_cdr_val != "0") && (old_cdr_val != "false"))
         {
             old_cdr = true;
