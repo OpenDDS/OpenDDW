@@ -277,17 +277,6 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
         return false;
     }
 
-#ifdef WIN32
-    //Must be done before we get the domain participant.
-    if (ddsIP == "127.0.0.1")
-    {
-        m_messageHandler(LogMessageType::DDS_INFO, "OpenDDS 3.15.0pre10 workaround: Stuffing DDS_IP into multicast_interface for rtps discovery");
-        OpenDDS::DCPS::Discovery_rch discovery = TheServiceParticipant->get_discovery(domainID);
-        OpenDDS::RTPS::RtpsDiscovery_rch rd = OpenDDS::DCPS::dynamic_rchandle_cast<OpenDDS::RTPS::RtpsDiscovery>(discovery);
-        rd->multicast_interface(ddsIP);
-    }
-#endif
-
     // Set the default domain QoS
     DDS::DomainParticipantQos domainQos;
     DDS::ReturnCode_t status = domainFactory->get_default_participant_qos(domainQos);
