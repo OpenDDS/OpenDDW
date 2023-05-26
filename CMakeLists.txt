@@ -30,8 +30,10 @@ add_library(OpenDDW
   ${MANAGER_SOURCE}
 )
 
-if (MSVC)
-  target_compile_options(OpenDDW PRIVATE 
+target_compile_features(OpenDDW PRIVATE cxx_std_17)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  target_compile_options(OpenDDW PRIVATE
     /W4 # Set the warning level to "Level4"
     /wd4251 #Must have dll-interface to be used by clients of struct.
     /wd4244 #Conversion warning from ACE.
@@ -39,8 +41,14 @@ if (MSVC)
   )
 
   target_compile_definitions(OpenDDW PRIVATE _CRT_SECURE_NO_WARNINGS)
-else()
-  target_compile_features(OpenDDW PRIVATE cxx_std_17)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(OpenDDW PRIVATE
+    -Wall
+    -Wextra
+    -Wshadow
+    -Wpedantic
+    -Werror # Warnings are errors!!!!
+  )
 endif()
 
 target_compile_options(OpenDDW PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wpedantic -Wno-unused> $<$<CXX_COMPILER_ID:MSVC>: /W4>)
