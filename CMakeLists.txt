@@ -31,6 +31,13 @@ add_library(OpenDDW
 )
 
 if (MSVC)
+  target_compile_options(OpenDDW PRIVATE 
+    /W4 # Set the warning level to "Level4"
+    /wd4251 #Must have dll-interface to be used by clients of struct.
+    /wd4244 #Conversion warning from ACE.
+    /WX # Warnings are errors!!!!
+  )
+
   target_compile_definitions(OpenDDW PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
   target_compile_features(OpenDDW PRIVATE cxx_std_17)
