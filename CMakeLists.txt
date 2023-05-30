@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project(OpenDDW VERSION 0.0.1 LANGUAGES CXX)
 
+cmake_policy(SET CMP0054 NEW) #Only interpret if() arguments as variables or keywords when unquoted.
+
 find_package(OpenDDS REQUIRED)
 
 set(MANAGER_HEADER
