@@ -2,26 +2,16 @@
 #define __DDS_MANAGER_DEFS__
 
 // Define DLL_PUBLIC as the import or export symbol declaration
-#if defined WIN32 || defined WIN64 || defined __CYGWIN__
+#if defined DDSMAN_STATIC_BUILD
+  #define DLL_PUBLIC
+#elif defined WIN32 || defined WIN64
   #ifdef OpenDDSManager_EXPORTS // Set automatically by CMake
-    #ifdef __GNUC__
-      #define DLL_PUBLIC __attribute__ ((dllexport))
-    #else
-      #define DLL_PUBLIC __declspec(dllexport)
-    #endif
+    #define DLL_PUBLIC __declspec(dllexport)
   #else
-    #ifdef __GNUC__
-      #define DLL_PUBLIC __attribute__ ((dllimport))
-    #else
-      #define DLL_PUBLIC __declspec(dllimport)
-    #endif
+    #define DLL_PUBLIC __declspec(dllimport)
   #endif
 #else
-  #if __GNUC__ >= 4
-    #define DLL_PUBLIC __attribute__ ((visibility("default")))
-  #else
-    #define DLL_PUBLIC
-  #endif
+  #define DLL_PUBLIC __attribute__ ((visibility("default")))
 #endif
 
 #endif

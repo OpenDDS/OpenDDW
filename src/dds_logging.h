@@ -13,4 +13,4 @@ enum class LogMessageType {
 void SetACELogger(std::function<void(LogMessageType mt, const std::string& message)> messageHandler);
 
 
-#endif // __CALLBACK_H__
+#endif // __DDS_LOGGING__H__
