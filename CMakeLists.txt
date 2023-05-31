@@ -10,7 +10,6 @@ set(MANAGER_HEADER
   src/dds_logging.h
   src/dds_manager.h
   src/dds_simple.h
-  src/filesystem.h
   src/participant_monitor.h
   src/platformIndependent.h
   src/qos_dictionary.h
