@@ -18,9 +18,7 @@
 #include <mutex>
 #include <map>
 #include <memory>
-#ifndef CANT_SUPPORT_SHARED_MUTEX
 #include <shared_mutex>
-#endif
 
 #include "dds_callback.h"
 #include "dds_listeners.h"
@@ -515,20 +513,12 @@ private:
 
     int m_domainID;
 
-    bool m_autoConfig;
-    bool m_iniCustomization;
-
     std::string m_config;
 
     //Thread safety mutex.
-#ifndef CANT_SUPPORT_SHARED_MUTEX
+
     mutable std::shared_mutex m_topicMutex;
     mutable std::shared_lock<decltype(m_topicMutex)> m_sharedLock;
-#else
-    mutable std::mutex m_topicMutex;
-    //No such thing as shared locks. Less efficient. Hopefully no deadlocks!
-    mutable std::unique_lock<decltype(m_topicMutex)> m_sharedLock;
-#endif
     mutable std::unique_lock<decltype(m_topicMutex)> m_uniqueLock;
 
     /**

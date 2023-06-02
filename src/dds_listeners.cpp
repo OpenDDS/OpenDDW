@@ -117,13 +117,6 @@ void GenericReaderListener::on_sample_lost(
 
 
 //------------------------------------------------------------------------------
-// GenericSubscriberListener
-//------------------------------------------------------------------------------
-// void GenericSubscriberListener::on_data_on_readers(DDS::Subscriber*)
-// {}
-
-
-//------------------------------------------------------------------------------
 // GenericWriterListener
 //------------------------------------------------------------------------------
 void GenericWriterListener::on_offered_deadline_missed(

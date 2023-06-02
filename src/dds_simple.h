@@ -8,9 +8,7 @@
 #include <mutex>
 #include <unordered_set>
 #include <future>
-#ifndef CANT_SUPPORT_SHARED_MUTEX
 #include <shared_mutex>
-#endif
 
 class DDSSimpleManager : public DDSManager
 {
@@ -408,13 +406,10 @@ private:
     ///The subscriber map is built when calling Callback<> or Subscriber<>. It keeps a list of all topics that the manager
     ///is subscribed to; useful when determining of there is a publisher of a given topic.
     std::map<std::string, std::string> m_subMap;
-#ifdef CANT_SUPPORT_SHARED_MUTEX
-    std::mutex mutex_shr;
-    std::shared_lock<decltype(mutex_shr)> m_sharedLock;
-#else
+
     std::shared_mutex mutex_shr;
     std::unique_lock<decltype(mutex_shr)> m_sharedLock;
-#endif
+
     std::unique_lock<decltype(mutex_shr)> m_uniqueLock;
     // Helper function to help us maintain Subscriber & Callback functions.
     // If readername is empty, create a generic name based on topic name. Otherwise just take the specified name
