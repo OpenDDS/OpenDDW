@@ -65,8 +65,3 @@ target_link_libraries(OpenDDW
 )
 
 OPENDDS_TARGET_SOURCES(OpenDDW idl/std_qos.idl)
-
-INSTALL(FILES
-	"${CMAKE_SOURCE_DIR}/idl2library.cmake"
-	DESTINATION "share/cmake/${PROJECT_NAME}"
-)
