@@ -21,46 +21,46 @@ endmacro()
 
 #Finds all of the input file's (absolute path) dependencies and returns them in IDL_TARGET_DEPENDENCIES
 function(find_idl_dependencies input_file)	
-	unset(search_list)
-	unset(return_list)
-	LIST(APPEND current_list ${input_file}) #Files that need to be searched (full path)
-	LIST(APPEND search_list ${input_file}) #Don't search more than once (full path)
-	
-	while(current_list)
-	    SET(file_list ${current_list})
-		unset(current_list)
-		foreach(current_file ${file_list})
-			set (INCLUDE_REGEX "^[ \t]*\#include[ \t]+\"(.+\\.[I|i][D|d][L|l])\".*$")
-			file(STRINGS ${current_file} included_files REGEX ${INCLUDE_REGEX})
-			foreach(included_file ${included_files})
-				string(REGEX REPLACE ${INCLUDE_REGEX} "\\1" included_filename "${included_file}")
-				get_idl_target_name(${included_filename} current_include_target)
-				if (NOT ${${current_include_target}_ABSPATH} IN_LIST search_list)
-					LIST(APPEND current_list ${${current_include_target}_ABSPATH})
-					LIST(APPEND return_list ${current_include_target})
-					LIST(APPEND search_list ${${current_include_target}_ABSPATH}) #The file should now never be searched again
-				endif()
-			endforeach()
-		endforeach()
-		unset(file_list)
-	endwhile()
-	set(IDL_TARGET_DEPENDENCIES ${return_list} PARENT_SCOPE)
+    unset(search_list)
+    unset(return_list)
+    LIST(APPEND current_list ${input_file}) #Files that need to be searched (full path)
+    LIST(APPEND search_list ${input_file}) #Don't search more than once (full path)
+    
+    while(current_list)
+        SET(file_list ${current_list})
+        unset(current_list)
+        foreach(current_file ${file_list})
+            set (INCLUDE_REGEX "^[ \t]*\#[ \t]*include[ \t]+[\"|<](.+\\.[I|i][D|d][L|l])[\"|>].*$")
+            file(STRINGS ${current_file} included_files REGEX ${INCLUDE_REGEX})
+            foreach(included_file ${included_files})
+                string(REGEX REPLACE ${INCLUDE_REGEX} "\\1" included_filename "${included_file}")
+                get_idl_target_name(${included_filename} current_include_target)
+                if (NOT ${${current_include_target}_ABSPATH} IN_LIST search_list)
+                    LIST(APPEND current_list ${${current_include_target}_ABSPATH})
+                    LIST(APPEND return_list ${current_include_target})
+                    LIST(APPEND search_list ${${current_include_target}_ABSPATH}) #The file should now never be searched again
+                endif()
+            endforeach()
+        endforeach()
+        unset(file_list)
+    endwhile()
+    set(IDL_TARGET_DEPENDENCIES ${return_list} PARENT_SCOPE)
 endfunction()
 
 function(idl2library)
     set(options BUILD_STATIC)
-	set(multiValueArgs IDLS)
-	
-	cmake_parse_arguments(idl2library "BUILD_STATIC" "" "IDLS" ${ARGN})
+    set(multiValueArgs IDLS)
+    
+    cmake_parse_arguments(idl2library "BUILD_STATIC" "" "IDLS" ${ARGN})
 
     if (${idl2library_BUILD_STATIC})
-	    message("Configured to build static libraries.")
-	else()
-	    message("Configured to build shared libraries.")
-	endif()
+        message("Configured to build static libraries.")
+    else()
+        message("Configured to build shared libraries.")
+    endif()
 
     unset(IDL_WISHLIST)
-	#Add idl excention to each file in the list if there is no extension
+    #Add idl excention to each file in the list if there is no extension
     foreach(IDL_ARG ${idl2library_IDLS})
         string(REGEX MATCH "\.[I|i][D|d][L|l]$" IDL_ARG_EXTENSION ${IDL_ARG})
         if(IDL_ARG_EXTENSION STREQUAL "")
@@ -72,9 +72,8 @@ function(idl2library)
     
     option(OPENDDS_CPP11_IDL_MAPPING "Use C++11 IDL mapping" OFF)	
     option(OPENDDS_CMAKE_VERBOSE "Print verbose output when loading the OpenDDS Config Package" ON)
-    option(OPENDDS_ALLOW_ENV_CHANGE "Projects may reset OpenDDS env vars." ON)
-	
-	#This is an option, but we set it as a forced cache var here because otherwise if you include OpenDDS before OpenDDSManager it will default off..
+    
+    #This is an option, but we set it as a forced cache var here because otherwise if you include OpenDDS before OpenDDSManager it will default off..
     set(OPENDDS_FILENAME_ONLY_INCLUDES ON CACHE BOOL "No directory info in generated #includes." FORCE)
     
     find_package(OpenDDS REQUIRED)
@@ -87,7 +86,7 @@ function(idl2library)
     message("The following idls are being used: ${IDL_WISHLIST}")
     
     # For each input idl create the following variables:  
-	# ${current_idl_target}_ABSPATH, ${current_idl_target}_ABSDIR, ${current_idl_target}_RELPATH, ${current_idl_target}_RELDIR
+    # ${current_idl_target}_ABSPATH, ${current_idl_target}_ABSDIR, ${current_idl_target}_RELPATH, ${current_idl_target}_RELDIR
     foreach(SINGLE_IDL ${IDL_WISHLIST})
         get_idl_target_name(${SINGLE_IDL} current_idl_target)
         unset(${current_idl_target}_ABSPATH)
@@ -141,8 +140,7 @@ function(idl2library)
         get_idl_target_name(${SINGLE_IDL} current_idl_target)
 
         # If this target has already been created, we're done
-        list(FIND IDL_TARGETS ${current_idl_target} SEARCH_INDEX)
-        if(${SEARCH_INDEX} GREATER -1)
+        if(TARGET ${current_idl_target})
             unset(${current_idl_target}_ABSPATH)
             message(WARNING "Already created a target for ${current_idl_target}..  Skipping")
             break()
@@ -155,38 +153,38 @@ function(idl2library)
             break()
         endif(TARGET ${current_idl_target})
 
-	    unset(IDL_TARGET_DEPENDENCIES)
-	    unset(current_idl_include_opts)
+        unset(IDL_TARGET_DEPENDENCIES)
+        unset(current_idl_include_opts)
 
         find_idl_dependencies("${${current_idl_target}_ABSPATH}") #Dependencies are returned in IDL_TARGET_DEPENDENCIES
-		
-		#Note:  current_idl_include_opts needs to be a list.  Previously it was a string and that will no longer work correctly.
+        
+        #Note:  current_idl_include_opts needs to be a list.  Previously it was a string and that will no longer work correctly.
         foreach(target_dependency ${IDL_TARGET_DEPENDENCIES})
             if(NOT "${${target_dependency}_ABSDIR}" STREQUAL "${${current_idl_target}_ABSDIR}")
-				list(APPEND current_idl_include_opts "-I${${target_dependency}_ABSDIR}")
+                list(APPEND current_idl_include_opts "-I${${target_dependency}_ABSDIR}")
             endif()
         endforeach()
-		list(REMOVE_DUPLICATES current_idl_include_opts)
-		
-		if(OPENDDS_CPP11_IDL_MAPPING)
+        list(REMOVE_DUPLICATES current_idl_include_opts)
+        
+        if(OPENDDS_CPP11_IDL_MAPPING)
             list(APPEND current_idl_include_opts "-Lc++11 ")
         endif()
-		
+        
         message("Adding library: ${current_idl_target}")
-		message("current_idl_include_opts:  ${current_idl_include_opts}")
+        message("current_idl_include_opts:  ${current_idl_include_opts}")
         message("Dependencies: ${IDL_TARGET_DEPENDENCIES}\n")
 
         if(idl2library_BUILD_STATIC)
             add_library(${current_idl_target} STATIC)
-			set_property(TARGET ${current_idl_target} PROPERTY POSITION_INDEPENDENT_CODE ON)
-		else()
-	        add_library(${current_idl_target} SHARED)
-		endif()
+            set_property(TARGET ${current_idl_target} PROPERTY POSITION_INDEPENDENT_CODE ON)
+        else()
+            add_library(${current_idl_target} SHARED)
+        endif()
 
         OPENDDS_TARGET_SOURCES(${current_idl_target} 
             ${${current_idl_target}_RELPATH}
             OPENDDS_IDL_OPTIONS ${current_idl_include_opts}
-			TAO_IDL_OPTIONS ${current_idl_include_opts}
+            TAO_IDL_OPTIONS ${current_idl_include_opts}
         )
         target_link_libraries(${current_idl_target}
            ${IDL_TARGET_DEPENDENCIES}
@@ -195,13 +193,13 @@ function(idl2library)
 
         # Group the IDL projects together
         set_target_properties(${current_idl_target} PROPERTIES FOLDER IDL)
-        target_compile_definitions(${current_idl_target} PUBLIC __OPENDDS_IDL_HAS_ANNOTATIONS _HAS_AUTO_PTR_ETC=1 _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
+        target_compile_definitions(${current_idl_target} PUBLIC _HAS_AUTO_PTR_ETC=1 _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
 
         # Add this project to the IDL list so it's only loaded 1x
         list(APPEND IDL_TARGETS "${current_idl_target}")
         list(APPEND IDL_RUNTIMES "$<TARGET_FILE:${current_idl_target}>")
 
-	    if(USING_INSTALL_HELPER)
+        if(USING_INSTALL_HELPER)
             SET_NAME_PROPERTIES(${current_idl_target})
         else()
             if(WIN32)
@@ -223,4 +221,3 @@ function(idl2library)
     message("idl libs: ${IDL_LIBS}")
     message("idl runtimes: ${IDL_RUNTIMES}")
 endfunction(idl2library)
-
