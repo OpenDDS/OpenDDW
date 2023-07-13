@@ -144,7 +144,7 @@ function(idl2library)
             unset(${current_idl_target}_ABSPATH)
             message(WARNING "Already created a target for ${current_idl_target}..  Skipping")
             break()
-        endif(${SEARCH_INDEX} GREATER -1)
+        endif(TARGET ${current_idl_target})
 
         # Second duplicate target check
         if(TARGET ${current_idl_target})
