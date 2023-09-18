@@ -368,29 +368,23 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
 
             // Use settings from the config file as a starting point
             newRtpsTransport->anticipated_fragments_ = defaultRtpsTransport->anticipated_fragments_;
-            newRtpsTransport->datalink_control_chunks_ = defaultRtpsTransport->datalink_control_chunks_;
-            newRtpsTransport->datalink_release_delay_ = defaultRtpsTransport->datalink_release_delay_;
-            newRtpsTransport->fragment_reassembly_timeout_ = defaultRtpsTransport->fragment_reassembly_timeout_;
 
-            //newRtpsTransport->handshake_timeout_ = defaultRtpsTransport->handshake_timeout_;
             newRtpsTransport->heartbeat_period_ = defaultRtpsTransport->heartbeat_period_;
-            //newRtpsTransport->heartbeat_response_delay_ = defaultRtpsTransport->heartbeat_response_delay_; //removed in 3.19
             newRtpsTransport->max_message_size_ = defaultRtpsTransport->max_message_size_;
-            newRtpsTransport->max_packet_size_ = defaultRtpsTransport->max_packet_size_;
-            newRtpsTransport->max_samples_per_packet_ = defaultRtpsTransport->max_samples_per_packet_;
+
+            newRtpsTransport->max_packet_size(defaultRtpsTransport->max_packet_size());
+            newRtpsTransport->max_samples_per_packet(defaultRtpsTransport->max_samples_per_packet());
             newRtpsTransport->multicast_group_address(defaultRtpsTransport->multicast_group_address());
             newRtpsTransport->multicast_interface_ = (defaultRtpsTransport->multicast_interface_);
             newRtpsTransport->nak_depth_ = defaultRtpsTransport->nak_depth_;
             newRtpsTransport->nak_response_delay_ = defaultRtpsTransport->nak_response_delay_;
-            newRtpsTransport->optimum_packet_size_ = defaultRtpsTransport->optimum_packet_size_;
-            newRtpsTransport->queue_initial_pools_ = defaultRtpsTransport->queue_initial_pools_;
-            newRtpsTransport->queue_messages_per_pool_ = defaultRtpsTransport->queue_messages_per_pool_;
+            newRtpsTransport->optimum_packet_size(defaultRtpsTransport->optimum_packet_size());
             newRtpsTransport->rcv_buffer_size_ = defaultRtpsTransport->rcv_buffer_size_;
             newRtpsTransport->receive_address_duration_ = defaultRtpsTransport->receive_address_duration_;
             newRtpsTransport->responsive_mode_ = defaultRtpsTransport->responsive_mode_;
             newRtpsTransport->send_buffer_size_ = defaultRtpsTransport->send_buffer_size_;
             newRtpsTransport->send_delay_ = defaultRtpsTransport->send_delay_;
-            newRtpsTransport->thread_per_connection_ = defaultRtpsTransport->thread_per_connection_;
+            newRtpsTransport->thread_per_connection(defaultRtpsTransport->thread_per_connection());
             newRtpsTransport->ttl_ = defaultRtpsTransport->ttl_;
             newRtpsTransport->use_multicast_ = defaultRtpsTransport->use_multicast_;
 
