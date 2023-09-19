@@ -53,7 +53,7 @@ endif()
 target_compile_options(OpenDDW PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wpedantic -Wno-unused> $<$<CXX_COMPILER_ID:MSVC>: /W4>)
 
 set(OPENDDS_TARGETS
-  OpenDDS::OpenDDS
+  OpenDDS::Rtps_Udp
 )
 
 target_include_directories(OpenDDW INTERFACE src)
@@ -66,6 +66,6 @@ target_link_libraries(OpenDDW
 OPENDDS_TARGET_SOURCES(OpenDDW idl/std_qos.idl)
 
 INSTALL(FILES
-	"${CMAKE_SOURCE_DIR}/idl2library.cmake"
-	DESTINATION "share/cmake/${PROJECT_NAME}"
+  "${PROJECT_SOURCE_DIR}/idl2library.cmake"
+  DESTINATION "share/cmake/${PROJECT_NAME}"
 )
