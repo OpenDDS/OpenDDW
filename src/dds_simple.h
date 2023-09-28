@@ -57,14 +57,14 @@ public:
         auto joinDomainFn = [this, domain = domainID](const ParticipantInfo& info) {
             std::stringstream sstr;
             sstr << "New participant joined domain " << domain << ".  IP Address:" << info.location;
-            sstr << " guid:" << info.guid << " at time:" << info.timestamp << ".";
+            sstr << " guid:" << info.guid << " at time:" << info.discovered_timestamp << ".";
             m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
         };
 
         auto leaveDomainFn = [this, domain = domainID](const ParticipantInfo& info) {
             std::stringstream sstr;
             sstr << "Participant left domain " << domain << ".  IP Address:" << info.location;
-            sstr << " guid:" << info.guid << " at time:" << info.timestamp << ".";
+            sstr << " guid:" << info.guid << " at time:" << info.discovered_timestamp << ".";
             m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
         };
 
