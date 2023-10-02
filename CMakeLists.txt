@@ -13,6 +13,7 @@ set(MANAGER_HEADER
   src/participant_monitor.h
   src/platformIndependent.h
   src/qos_dictionary.h
+  src/dds_manager.hpp
 )
 
 set(MANAGER_SOURCE
@@ -71,7 +72,15 @@ set(OPENDDS_TARGETS
   OpenDDS::Rtps_Udp
 )
 
-#target_include_directories(OpenDDW INTERFACE src)
+target_include_directories(${PROJECT_NAME} PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	$<INSTALL_INTERFACE:include>
+)
+
+set_property(TARGET ${PROJECT_NAME}
+	APPEND PROPERTY PUBLIC_HEADER
+	${MANAGER_HEADER}
+)
 
 target_link_libraries(OpenDDW
   ${OPENDDS_TARGETS}
@@ -82,10 +91,24 @@ OPENDDS_TARGET_SOURCES(OpenDDW idl/std_qos.idl)
 
 INCLUDE(CMakePackageConfigHelpers)
 
+install(TARGETS ${PROJECT_NAME}
+	EXPORT ${PROJECT_NAME}
+
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
+	PUBLIC_HEADER DESTINATION include
+)
+
 INSTALL(EXPORT ${PROJECT_NAME}
 	NAMESPACE ${PROJECT_TARGET_PREFIX}::
 	FILE ${PROJECT_TARGET_FILE}
 	DESTINATION ${CONFIG_FILE_INSTALL_LOCATION}
+)
+
+INSTALL(FILES
+	idl/std_qos.idl
+	DESTINATION idl
 )
 
 CONFIGURE_PACKAGE_CONFIG_FILE(${PROJECT_PACKAGE_CONFIG_IN_FILE}
