@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
+option(OpenDDWStatic "OpenDDWStatic" OFF) #Build openddw to be compatible with a static build of opendds
 project(OpenDDW VERSION 0.0.1 LANGUAGES CXX)
 
 find_package(OpenDDS REQUIRED)
@@ -65,6 +66,10 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     -Werror # Warnings are errors!!!!
   )
 endif()
+
+if(OpenDDWStatic)
+  add_compile_definitions(OPENDDW_STATIC)
+endif(OpenDDWStatic)
 
 target_compile_options(OpenDDW PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wpedantic -Wno-unused> $<$<CXX_COMPILER_ID:MSVC>: /W4>)
 

@@ -29,6 +29,12 @@
 #include "platformIndependent.h"
 #include "std_qosC.h"
 
+//For using static open dds these files need to be in some cpp file
+#if defined (OPENDDW_STATIC)
+    #include <dds/DCPS/RTPS/RtpsDiscovery.h>
+    #include <dds/DCPS/transport/rtps_udp/RtpsUdp.h>
+#endif
+
 std::map<int, int> g_transportInstances;
 
 //------------------------------------------------------------------------------
