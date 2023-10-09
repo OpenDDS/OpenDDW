@@ -30,7 +30,7 @@
 #include "std_qosC.h"
 
 //For using static open dds these files need to be in some cpp file
-#if defined (OPENDDW_STATIC)
+#if defined (ACE_AS_STATIC_LIBS)
     #include <dds/DCPS/RTPS/RtpsDiscovery.h>
     #include <dds/DCPS/transport/rtps_udp/RtpsUdp.h>
 #endif

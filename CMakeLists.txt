@@ -67,10 +67,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   )
 endif()
 
-if(OpenDDWStatic)
-  add_compile_definitions(OPENDDW_STATIC)
-endif(OpenDDWStatic)
-
 target_compile_options(OpenDDW PRIVATE $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wpedantic -Wno-unused> $<$<CXX_COMPILER_ID:MSVC>: /W4>)
 
 set(OPENDDS_TARGETS
