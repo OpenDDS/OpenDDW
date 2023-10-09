@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 
-option(OpenDDWStatic "OpenDDWStatic" OFF) #Build openddw to be compatible with a static build of opendds
 project(OpenDDW VERSION 0.0.1 LANGUAGES CXX)
 
 find_package(OpenDDS REQUIRED)
