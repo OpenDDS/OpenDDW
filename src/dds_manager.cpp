@@ -196,16 +196,10 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
 
     ACE_Ini_ImpExp import(heap);
     if (0 != import.import_config(dds_config_file_str.c_str())) {
-        std::cerr << "Unable to open " << dds_config_file_str.c_str() << ". "
-            << "Specify the correct path in DDSManager::joinDomain, "
-            << "set the 'DDS_CONFIG_FILE' environment variable, or "
-            << "copy the DDS configuration file into the working dir."
-            << "\n\nThe application will now exit :("
-            << std::endl;
-
-        // Allow some time for the user to see the message before exit
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        exit(1);
+        const std::string error = "Unable to open " + dds_config_file_str + ". "
+            + "Set the 'DDS_CONFIG_FILE' environment variable or "
+            + "copy the DDS configuration file into the working dir.";
+        throw std::runtime_error(error);
     }
 
     // Process common (no section) data here.
