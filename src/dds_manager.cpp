@@ -377,7 +377,7 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
             newRtpsTransport->multicast_group_address(defaultRtpsTransport->multicast_group_address(
 #if OPENDDS_VERSION_AT_LEAST(3, 27, 0)
               domainID
-#else
+#endif
             ));
             newRtpsTransport->multicast_interface_ = (defaultRtpsTransport->multicast_interface_);
             newRtpsTransport->nak_depth_ = defaultRtpsTransport->nak_depth_;
