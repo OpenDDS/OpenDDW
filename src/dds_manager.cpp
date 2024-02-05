@@ -374,7 +374,11 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
 
             newRtpsTransport->max_packet_size(defaultRtpsTransport->max_packet_size());
             newRtpsTransport->max_samples_per_packet(defaultRtpsTransport->max_samples_per_packet());
-            newRtpsTransport->multicast_group_address(defaultRtpsTransport->multicast_group_address(domainID));
+            newRtpsTransport->multicast_group_address(defaultRtpsTransport->multicast_group_address(
+#if OPENDDS_VERSION_AT_LEAST(3, 27, 0)
+              domainID
+#else
+            ));
             newRtpsTransport->multicast_interface_ = (defaultRtpsTransport->multicast_interface_);
             newRtpsTransport->nak_depth_ = defaultRtpsTransport->nak_depth_;
             newRtpsTransport->nak_response_delay_ = defaultRtpsTransport->nak_response_delay_;
