@@ -78,7 +78,7 @@ jobs:
           echo VCPKG_INSTALLED_DIR=${{ github.workspace }}\vcpkg\installed>> %GITHUB_ENV%
       - name: 'Install openssl and xerces (Windows)'
         if: runner.os == 'Windows'
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: 53bef8994c541b6561884a8395ea35715ece75db
