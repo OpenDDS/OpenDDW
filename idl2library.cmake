@@ -73,9 +73,6 @@ function(idl2library)
     option(OPENDDS_CPP11_IDL_MAPPING "Use C++11 IDL mapping" OFF)	
     option(OPENDDS_CMAKE_VERBOSE "Print verbose output when loading the OpenDDS Config Package" ON)
     
-    #This is an option, but we set it as a forced cache var here because otherwise if you include OpenDDS before OpenDDSManager it will default off..
-    set(OPENDDS_FILENAME_ONLY_INCLUDES ON CACHE BOOL "No directory info in generated #includes." FORCE)
-    
     find_package(OpenDDS REQUIRED)
 
     if(NOT IDL_WISHLIST)
@@ -185,6 +182,7 @@ function(idl2library)
             ${${current_idl_target}_RELPATH}
             OPENDDS_IDL_OPTIONS ${current_idl_include_opts}
             TAO_IDL_OPTIONS ${current_idl_include_opts}
+            INCLUDE_BASE ${${current_idl_target}_ABSDIR}
         )
         target_link_libraries(${current_idl_target}
            ${IDL_TARGET_DEPENDENCIES}
