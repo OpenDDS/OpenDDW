@@ -242,7 +242,7 @@ public:
     // This function waits until it finds one (or more) Subscriber of topic T OR secondsToWait seconds expires.
     // Useful when making sure your messages are being Published on a certain topic.
     template <class T>
-    bool WaitForSubscriber(std::chrono::milliseconds timeToWait = std::chrono::seconds(2))
+    bool WaitForSubscriber(std::chrono::milliseconds timeToWait = std::chrono::seconds(15))
     {
         return GetNumberOfSubscribers<T>(1, timeToWait) > 0;
     }
@@ -250,14 +250,14 @@ public:
     //Call WaitForPublisher(0) if you have already been discovered and want to see if you've lost all connection to publishers.
     // readerName is not required unless user specifies a readerName when creating their Subscriber / Callback
     template <class T>
-    bool WaitForPublisher(std::chrono::milliseconds timeToWait = std::chrono::seconds(2), std::string readerName = "")
+    bool WaitForPublisher(std::chrono::milliseconds timeToWait = std::chrono::seconds(15), std::string readerName = "")
     {
         return GetNumberOfPublishers<T>(1, timeToWait, readerName) > 0;
     }
 
     // Function that will wait until [max_wait] passes or until we find [min_count] number of Subscribers, whichever is faster
     template<class T>
-    int GetNumberOfSubscribers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(2))
+    int GetNumberOfSubscribers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(15))
     {
         const std::chrono::milliseconds waitIncriment(100);
         std::chrono::milliseconds timeWaited(0);
@@ -309,7 +309,8 @@ public:
                 }
             }
 
-            sstr << "Failed to find " << min_count << " Subscribers(s)... Only found " << pubStatus.current_count;
+            std::string addressInfo = getWriterAddress(temp);
+            sstr << "Failed to find " << min_count << " on " << addressInfo << ".  Subscribers(s)... Only found " << pubStatus.current_count;
             m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
 
             return pubStatus.current_count;
@@ -322,9 +323,31 @@ public:
         return 0;
     }
 
+    template <class T>
+    std::string GetSubscriberAddress()
+    {
+        std::string topic_name = typeid(T).name();
+        try {
+            std::string temp;
+            {
+                decltype(m_sharedLock) lck(mutex_shr);
+                auto iter = m_pubMap.find(topic_name);
+                if (iter == m_pubMap.end()) {
+                    return std::string("Invalid Publisher for ") + topic_name;
+                }
+
+                temp = iter->second;
+            }
+            return getWriterAddress(temp);
+        }
+        catch (...) {
+        }
+        return std::string("Invalid Publisher for ") + topic_name;
+    }
+
     // Function that will wait until [max_wait] passes or until we find [min_count] number of Publishers, whichever is faster
     template <class T>
-    int GetNumberOfPublishers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(2), std::string reader_name = "")
+    int GetNumberOfPublishers(int min_count, std::chrono::milliseconds max_wait = std::chrono::seconds(15), std::string reader_name = "")
     {
         const std::chrono::milliseconds waitIncriment(100);
         std::chrono::milliseconds timeWaited(0);
@@ -349,7 +372,9 @@ public:
             std::string temp = iter->second;
             lck.unlock();
 
-            auto dr = getReader(temp, GenerateReaderName(temp, reader_name)); // Reader name == Topic name + "Reader", unless user-specified
+            auto genReaderName = GenerateReaderName(temp, reader_name);
+
+            auto dr = getReader(temp, genReaderName); // Reader name == Topic name + "Reader", unless user-specified
 
             if (dr == nullptr) {
                 sstr << "No reader found for: " << topic_name << ".";
@@ -375,7 +400,9 @@ public:
                     return subStatus.current_count;
                 }
             }
-            sstr << "Failed to find " << min_count << " Publisher(s)... Only found " << subStatus.current_count;
+
+            std::string addressInfo = getReaderAddress(temp, genReaderName);
+            sstr << "Failed to find " << min_count << " on " << addressInfo << ".  Publisher(s)... Only found " << subStatus.current_count;
             m_messageHandler(LogMessageType::DDS_INFO, sstr.str());
 
             return subStatus.current_count;
@@ -387,6 +414,29 @@ public:
         }
 
         return 0;
+    }
+
+    template <class T>
+    std::string GetPublisherAddress(std::string reader_name = "")
+    {
+        std::string topic_name = typeid(T).name();
+        try {
+            std::string temp;
+            {
+                decltype(m_sharedLock) lck(mutex_shr);
+                auto iter = m_subMap.find(topic_name);
+                if (iter == m_subMap.end()) {
+                    return std::string("Invalid Subscirber for ") + topic_name;
+                }
+                temp = iter->second;
+            }
+
+            return getReaderAddress(temp, GenerateReaderName(temp, reader_name)); // Reader name == Topic name + "Reader", unless user-specified
+        }
+        catch (...) {
+        }
+
+        return std::string("Invalid subscriber for ") + topic_name;
     }
 
     void EventID(int id) { m_eventID = id; }

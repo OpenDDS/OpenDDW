@@ -324,6 +324,21 @@ public:
                                const std::string& readerName) const;
 
     /**
+     * @brief Get the addresses associated with a topic.
+     * @param[in] topicName The name of the topic.
+     * @return String containing the addresses used by the writer.
+     */
+    std::string getWriterAddress(const std::string& topicName) const;
+
+    /**
+     * @brief Get the addresses associated with a topic.
+     * @param[in] topicName The name of the topic.
+     * @param[in] readerName The name of the reader.
+     * @return String containing the addresses used by the reader.
+     */
+    std::string getReaderAddress(const std::string& topicName, const std::string& readerName) const;
+
+    /**
      * @brief Get the data writer associated with a topic.
      * @param[in] topicName The name of the topic.
      * @return The data writer object if it was found; otherwise nullptr.
