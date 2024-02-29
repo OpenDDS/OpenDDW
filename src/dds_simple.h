@@ -426,7 +426,7 @@ public:
                 decltype(m_sharedLock) lck(mutex_shr);
                 auto iter = m_subMap.find(topic_name);
                 if (iter == m_subMap.end()) {
-                    return std::string("Invalid Subscirber for ") + topic_name;
+                    return std::string("Invalid Subscriber for ") + topic_name;
                 }
                 temp = iter->second;
             }
