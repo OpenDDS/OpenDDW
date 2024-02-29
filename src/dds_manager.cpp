@@ -15,6 +15,9 @@
 #include <dds/DCPS/Service_Participant.h>
 #include <dds/DCPS/RTPS/RtpsDiscovery.h>
 #include <dds/DCPS/ServiceEventDispatcher.h>
+#include <dds/DCPS/DataWriterImpl.h>
+#include <dds/DCPS/DataReaderImpl.h>
+#include <dds/DCPS/LogAddr.h>
 
 #ifdef WIN32
 #pragma warning(pop)
@@ -34,6 +37,26 @@
     #include <dds/DCPS/RTPS/RtpsDiscovery.h>
     #include <dds/DCPS/transport/rtps_udp/RtpsUdp.h>
 #endif
+
+//Helper function to get the address list for a sequence
+std::string GetAddressInfo(const OpenDDS::DCPS::TransportLocatorSeq& info)
+{
+    std::string strAddress;
+    for (unsigned int idx = 0; idx != info.length(); ++idx) {
+        const auto locators = OpenDDS::RTPS::transport_locator_to_locator_seq(info[idx]);
+        for (unsigned int idx2 = 0; idx2 != locators.length(); ++idx2) {
+            ACE_INET_Addr addr;
+            if (locator_to_address(addr, locators[idx2], false) == 0) {
+                if (!strAddress.empty()) {
+                    strAddress += ",";
+                }
+                strAddress += OpenDDS::DCPS::LogAddr(addr).c_str();
+            }
+        }
+    }
+
+    return strAddress;
+}
 
 std::map<int, int> g_transportInstances;
 
@@ -1148,6 +1171,28 @@ DDS::DataReader_var DDSManager::getReader(const std::string& topicName,
     return nullptr;
 }
 
+
+//------------------------------------------------------------------------------
+std::string DDSManager::getWriterAddress(const std::string& topicName) const
+{
+    DDS::DataWriter_var writer = getWriter(topicName);
+    auto dwi = dynamic_cast<OpenDDS::DCPS::DataWriterImpl*>(writer.in());
+    if (dwi == nullptr) {
+        return "Invalid Writer";
+    }
+    return GetAddressInfo(dwi->connection_info());
+}
+
+//------------------------------------------------------------------------------
+std::string DDSManager::getReaderAddress(const std::string& topicName, const std::string& readerName) const
+{
+    DDS::DataReader_var reader = getReader(topicName, readerName);
+    auto dri = dynamic_cast<OpenDDS::DCPS::DataReaderImpl*>(reader.in());
+    if (dri == nullptr) {
+        return "Invalid Reader";
+    }
+    return GetAddressInfo(dri->connection_info());
+}
 
 //------------------------------------------------------------------------------
 DDS::DataWriter_var DDSManager::getWriter(const std::string& topicName) const
