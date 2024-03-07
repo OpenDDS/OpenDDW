@@ -7,9 +7,6 @@ set(@PROJECT_NAME@_TARGET_LIST
 include(CMakeFindDependencyMacro)
 
 # Find OpenDDS
-#This allows DDS_ROOT to be set off OpenDDSConfig.cmake location
-option(OPENDDS_ALLOW_ENV_CHANGE "Allow multiple find_package(opendds) calls." ON)
-option(OPENDDS_FILENAME_ONLY_INCLUDES "No directory info in generated #includes." ON)
 find_package(OpenDDS REQUIRED)
 
 #Include idl2dll.cmake so it can be used if/when needed
