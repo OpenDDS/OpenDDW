@@ -87,7 +87,7 @@ target_link_libraries(OpenDDW
   Threads::Threads
 )
 
-OPENDDS_TARGET_SOURCES(OpenDDW idl/std_qos.idl)
+opendds_target_sources(OpenDDW idl/std_qos.idl OPENDDS_IDL_OPTIONS -Gxtypes-complete)
 
 INCLUDE(CMakePackageConfigHelpers)
 
