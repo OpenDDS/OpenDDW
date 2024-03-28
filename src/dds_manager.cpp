@@ -12,6 +12,9 @@
 #include <dds/DCPS/transport/framework/TransportRegistry.h>
 #include <dds/DCPS/transport/rtps_udp/RtpsUdpInst.h>
 #include <dds/DCPS/transport/rtps_udp/RtpsUdpInst_rch.h>
+#ifdef ACE_AS_STATIC_LIBS
+#  include <dds/DCPS/transport/rtps_udp/RtpsUdp.h>
+#endif
 #include <dds/DCPS/Service_Participant.h>
 #include <dds/DCPS/RTPS/RtpsDiscovery.h>
 #include <dds/DCPS/ServiceEventDispatcher.h>
@@ -31,12 +34,6 @@
 
 #include "platformIndependent.h"
 #include "std_qosC.h"
-
-//For using static open dds these files need to be in some cpp file
-#if defined (ACE_AS_STATIC_LIBS)
-    #include <dds/DCPS/RTPS/RtpsDiscovery.h>
-    #include <dds/DCPS/transport/rtps_udp/RtpsUdp.h>
-#endif
 
 //Helper function to get the address list for a sequence
 std::string GetAddressInfo(const OpenDDS::DCPS::TransportLocatorSeq& info)
@@ -149,14 +146,14 @@ DDSManager::~DDSManager()
 
     m_messageHandler(LogMessageType::DDS_INFO, "Deleting DDSManagerImpl");
 
-    if (!CORBA::is_nil(m_domainParticipant.in()))
+    if (m_domainParticipant)
     {
         status = m_domainParticipant->delete_contained_entities();
         checkStatus(status, "DDS::DomainParticipant::delete_contained_entities");
     }
 
     DDS::DomainParticipantFactory_var dpf = TheParticipantFactory;
-    if (!CORBA::is_nil(dpf.in()))
+    if (dpf)
     {
         status = dpf->delete_participant(m_domainParticipant);
         checkStatus(status, "DDS::DomainParticipant::delete_participant");
@@ -175,14 +172,13 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
 {
     // If the domain participant has already been instantiated and it's
     // connected to a different domain than the request, report an error
-    if (!CORBA::is_nil(m_domainParticipant.in()) &&
-        domainID != m_domainParticipant->get_domain_id())
+    if (m_domainParticipant && domainID != m_domainParticipant->get_domain_id())
     {
         return false;
     }
 
     // If the domain participant has already been instantiated, we're done
-    if (!CORBA::is_nil(m_domainParticipant.in()))
+    if (m_domainParticipant)
     {
         return true;
     }
@@ -283,7 +279,7 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
         nullptr,
         OpenDDS::DCPS::DEFAULT_STATUS_MASK);
 
-    if (CORBA::is_nil(m_domainParticipant.in()))
+    if (!m_domainParticipant)
     {
         std::cerr << "Error creating participant for domain '"
             << domainID
@@ -439,7 +435,7 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
 //------------------------------------------------------------------------------
 bool DDSManager::enableDomain()
 {
-    if (CORBA::is_nil(m_domainParticipant.in()))
+    if (!m_domainParticipant)
     {
         return false;
     }

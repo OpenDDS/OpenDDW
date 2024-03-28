@@ -1,5 +1,5 @@
 # idl2library(IDLS <files> [BUILD_STATIC])
-# Generate a shared or static library for each IDL in a list.  
+# Generate a shared or static library for each IDL in a list.
 #
 # Example:
 #           idl2library(IDLS idl/example.idl idl/std_doc.idl)
@@ -20,12 +20,12 @@ macro(get_idl_target_name idlfile output)
 endmacro()
 
 #Finds all of the input file's (absolute path) dependencies and returns them in IDL_TARGET_DEPENDENCIES
-function(find_idl_dependencies input_file)	
+function(find_idl_dependencies input_file)
     unset(search_list)
     unset(return_list)
     LIST(APPEND current_list ${input_file}) #Files that need to be searched (full path)
     LIST(APPEND search_list ${input_file}) #Don't search more than once (full path)
-    
+
     while(current_list)
         SET(file_list ${current_list})
         unset(current_list)
@@ -50,7 +50,7 @@ endfunction()
 function(idl2library)
     set(options BUILD_STATIC)
     set(multiValueArgs IDLS)
-    
+
     cmake_parse_arguments(idl2library "BUILD_STATIC" "" "IDLS" ${ARGN})
 
     if (${idl2library_BUILD_STATIC})
@@ -69,20 +69,20 @@ function(idl2library)
         endif()
         list(APPEND IDL_WISHLIST ${IDL_ARG})
     endforeach()
-    
-    option(OPENDDS_CPP11_IDL_MAPPING "Use C++11 IDL mapping" OFF)	
+
+    option(OPENDDS_CPP11_IDL_MAPPING "Use C++11 IDL mapping" OFF)
     option(OPENDDS_CMAKE_VERBOSE "Print verbose output when loading the OpenDDS Config Package" ON)
-    
+
     find_package(OpenDDS REQUIRED)
 
     if(NOT IDL_WISHLIST)
         message("No IDLs specified.  Update your CMakeLists.txt to include a list of the required IDLs, and pass that list to idl2library()")
     endif()
-    
+
     list(REMOVE_DUPLICATES IDL_WISHLIST)
     message("The following idls are being used: ${IDL_WISHLIST}")
-    
-    # For each input idl create the following variables:  
+
+    # For each input idl create the following variables:
     # ${current_idl_target}_ABSPATH, ${current_idl_target}_ABSDIR, ${current_idl_target}_RELPATH, ${current_idl_target}_RELDIR
     foreach(SINGLE_IDL ${IDL_WISHLIST})
         get_idl_target_name(${SINGLE_IDL} current_idl_target)
@@ -92,11 +92,11 @@ function(idl2library)
         unset(${current_idl_target}_RELDIR)
 
         cmake_path(IS_ABSOLUTE SINGLE_IDL SINGLE_IDL_IS_ABS)
-        if(SINGLE_IDL_IS_ABS) 
+        if(SINGLE_IDL_IS_ABS)
             set(${current_idl_target}_ABSPATH ${SINGLE_IDL})
         else()
-            find_file(${current_idl_target}_ABSPATH 
-                ${SINGLE_IDL} 
+            find_file(${current_idl_target}_ABSPATH
+                ${SINGLE_IDL}
                 PATHS ${CMAKE_CURRENT_SOURCE_DIR}
                 NO_CACHE
                 REQUIRED
@@ -154,7 +154,7 @@ function(idl2library)
         unset(current_idl_include_opts)
 
         find_idl_dependencies("${${current_idl_target}_ABSPATH}") #Dependencies are returned in IDL_TARGET_DEPENDENCIES
-        
+
         #Note:  current_idl_include_opts needs to be a list.  Previously it was a string and that will no longer work correctly.
         foreach(target_dependency ${IDL_TARGET_DEPENDENCIES})
             if(NOT "${${target_dependency}_ABSDIR}" STREQUAL "${${current_idl_target}_ABSDIR}")
@@ -162,11 +162,11 @@ function(idl2library)
             endif()
         endforeach()
         list(REMOVE_DUPLICATES current_idl_include_opts)
-        
+
         if(OPENDDS_CPP11_IDL_MAPPING)
             list(APPEND current_idl_include_opts "-Lc++11 ")
         endif()
-        
+
         message("Adding library: ${current_idl_target}")
         message("current_idl_include_opts:  ${current_idl_include_opts}")
         message("Dependencies: ${IDL_TARGET_DEPENDENCIES}\n")
@@ -178,9 +178,9 @@ function(idl2library)
             add_library(${current_idl_target} SHARED)
         endif()
 
-        OPENDDS_TARGET_SOURCES(${current_idl_target} 
+        opendds_target_sources(${current_idl_target}
             ${${current_idl_target}_RELPATH}
-            OPENDDS_IDL_OPTIONS ${current_idl_include_opts}
+            OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete
             TAO_IDL_OPTIONS ${current_idl_include_opts}
             INCLUDE_BASE ${${current_idl_target}_ABSDIR}
         )
