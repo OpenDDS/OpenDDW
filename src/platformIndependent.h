@@ -3,6 +3,10 @@
 #include <filesystem>
 #include <string>
 
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
 namespace pi
 {
     /// Returns the full path to the executable currently running.
@@ -41,7 +45,19 @@ namespace pi
         strExecutablePath.resize(nSizeReturned);
 #endif
 
-#else  //NOT defined( WIN32 ) || defined( WIN64 )
+#elif defined(__APPLE__)
+        uint32_t nBufferExePathSize = nPathIncrementSize;
+        strExecutablePath.resize(nBufferExePathSize, '\0');
+        int ret = _NSGetExecutablePath(&strExecutablePath[0], &nBufferExePathSize);
+        if (ret != 0) {
+          strExecutablePath.resize(nBufferExePathSize, '\0');
+          ret = _NSGetExecutablePath(&strExecutablePath[0], &nBufferExePathSize);
+          if (ret != 0) {
+            throw std::runtime_error("Error getting the executable path");
+          }
+        }
+
+#else  // !defined( WIN32 ) && !defined( WIN64 ) && !defined(__APPLE__)
         size_t  nBufferExePathSize = 0;
         ssize_t nSizeReturned = 0;
         // readlink returns the size copied to the supplied buffer, if it fills the
