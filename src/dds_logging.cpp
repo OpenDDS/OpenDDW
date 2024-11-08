@@ -39,6 +39,7 @@ void ManagerAceCallback::log(ACE_Log_Record& record)
             lt = LogMessageType::DDS_WARNING;
             break;
 
+        case LM_INFO:
         case LM_NOTICE:
             lt = LogMessageType::DDS_INFO;
             break;
