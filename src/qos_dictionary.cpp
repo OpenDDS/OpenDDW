@@ -147,6 +147,8 @@ namespace
  * @details defaults to by source timestamp, but can be overridden with $DDS_DISTRUST_TIMESTAMPSS
  * @return QosPolicy for destination order.
  */
+
+
 DDS::DestinationOrderQosPolicyKind QosDictionary::getTimestampPolicy()
 {
     //lets use some static bools so we don't getenv() and transform strings every time we register a new topic.
@@ -203,49 +205,7 @@ DDS::DestinationOrderQosPolicyKind QosDictionary::getTimestampPolicy()
  */
 DDS::DataRepresentationId_t QosDictionary::getDataRepresentationType()
 {
-    //lets use some static bools so we don't getenv() and transform strings every time we register a new topic.
-    //TODO: Determine if this needs thread safety. I think it doesn't?
-    static bool first_time = true;
-    static DDS::DataRepresentationId_t retval = DDS::XCDR2_DATA_REPRESENTATION;
-    if (!first_time)
-    {
-        //if (retval == DDS::XCDR2_DATA_REPRESENTATION)
-        //{
-        //    std::cout << "[DDSMAN DEBUG] Using XCDR2" << std::endl;
-        //}
-        //else
-        //{
-        //    std::cout << "[DDSMAN DEBUG] Using Classic CDR" << std::endl;
-        //}
-        return retval;
-    }
-    char* DDS_USE_OLD_CDR = getenv("DDS_USE_OLD_CDR");
-    bool old_cdr = false;
-    if (DDS_USE_OLD_CDR != NULL)
-    {
-        std::string old_cdr_val(DDS_USE_OLD_CDR);
-        std::transform(old_cdr_val.begin(), old_cdr_val.end(), old_cdr_val.begin(), [](char ch) {return static_cast<char>(::tolower(ch)); });
-        if ((old_cdr_val != "") && (old_cdr_val != "0") && (old_cdr_val != "false"))
-        {
-            old_cdr = true;
-        }
-    }
-    if (!old_cdr)
-    {
-        std::cout << "The 'DDS_USE_OLD_CDR' environment variable was not set. "
-            << "Using XCDR2 encoding for data writers. This will enable xtypes functionality with OpenDDS 3.16.0 and later"
-            << std::endl;
-        retval = DDS::XCDR2_DATA_REPRESENTATION;
-    }
-    else
-    {
-        std::cout << "The 'DDS_USE_OLD_CDR' environment variable was set. "
-            << "Using 'classic' CDR encoding for data writers. This will enable interoperability with OpenDDS versions before 3.16.0"
-            << std::endl;
-        retval = DDS::XCDR_DATA_REPRESENTATION;
-    }
-    first_time = false;
-    return retval;
+    return DDS::XCDR2_DATA_REPRESENTATION;
 }
 
 OpenDDS::DCPS::Encoding::Kind QosDictionary::getEncodingKind()
