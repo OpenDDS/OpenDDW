@@ -577,7 +577,7 @@ bool DDSManager::addPartition(const std::string& topicName,
 //------------------------------------------------------------------------------
 bool DDSManager::createSubscriber(const std::string& topicName,
     const std::string& readerName,
-    const std::string& filter)
+    const std::string& filter, const DDS::StringSeq &filterParams)
 {
     // Make sure the data reader name is valid
     if (readerName.empty())
@@ -641,14 +641,14 @@ bool DDSManager::createSubscriber(const std::string& topicName,
     // Create a new filtered topic if requested
     if (!filter.empty())
     {
-        const DDS::StringSeq noParams;
-        const std::string filterName = topicName + "_" + readerName;
+        const std::string filterName = topicName + "_" + readerName + "_0";
         DDS::ContentFilteredTopic_var filteredTopic =
             m_domainParticipant->create_contentfilteredtopic(
                 filterName.c_str(),
                 topicGroup->topic,
                 filter.c_str(),
-                noParams);
+                filterParams);
+
 
         if (!filteredTopic)
         {
@@ -784,7 +784,8 @@ bool DDSManager::createPublisher(const std::string& topicName)
 //------------------------------------------------------------------------------
 bool DDSManager::createPublisherSubscriber(const std::string& topicName,
     const std::string& readerName,
-    const std::string& filter)
+    const std::string& filter,
+    const DDS::StringSeq &filterParams)
 {
     // TODO: Remove this function (No longer used).
     bool pass = false;
@@ -795,7 +796,7 @@ bool DDSManager::createPublisherSubscriber(const std::string& topicName,
         return false;
     }
 
-    pass = createSubscriber(topicName, readerName, filter);
+    pass = createSubscriber(topicName, readerName, filter, filterParams);
     if (!pass)
     {
         return false;
@@ -929,33 +930,57 @@ bool DDSManager::replaceFilter(const std::string& topicName,
     decltype(m_sharedLock) lock(m_topicMutex);
     std::shared_ptr<TopicGroup> topicGroup = m_topics[topicName];
 
-    if (topicGroup->m_readerListeners.find(readerName) != topicGroup->m_readerListeners.end()) {
+    if (topicGroup->m_readerListeners.find(readerName) == topicGroup->m_readerListeners.end()) {
         std::cerr << "Error in replaceFilter:  Reader listener '" << readerName
-            << "' already registered for topic '"
+            << "' not registered for topic '"
             << topicName
             << "'." << std::endl;
         return false;
     }
 
-    // Stop the emitter if it exists
+    // Stop the emitter if it exists (exists for callbacks)
     EmitterBase* emitter = nullptr;
     if (topicGroup->emitters.find(readerName) != topicGroup->emitters.end())
     {
+        std::cerr << "found emitter when trying to stop" << std::endl;
         emitter = topicGroup->emitters[readerName].get();
         if (emitter->isRunning())
         {
+            std::cerr << "emitter told to stop" << std::endl;
             emitter->stop();
         }
     }
 
 
-    DDS::ContentFilteredTopic* topicDesc =
-        dynamic_cast<DDS::ContentFilteredTopic*>
-        (dataReader->get_topicdescription());
+    DDS::TopicDescription_var topic = dataReader->get_topicdescription();
+    DDS::ContentFilteredTopic_var topicDesc = DDS::ContentFilteredTopic::_narrow(topic);
 
+    // We have to destroy the current data reader before building a new one
+    // The first step is to delete the contained entities (deletes all the ReadConditions and QueryConditions)
+    DDS::ReturnCode_t return_code = dataReader->delete_contained_entities();
+    if (return_code != DDS::RETCODE_OK)
+    {
+        std::cerr << "dataReader failed on delete_contained_entities, return_code:  " << return_code << std::endl;
+        return false;
+    }
+
+    // Now delete the reader
+    return_code = subscriber->delete_datareader(dataReader);
+    dataReader = nullptr;
+    if (return_code != DDS::RETCODE_OK)
+    {
+        std::cerr << "dataReader failed on delete_datareader, return_code:  " << return_code << std::endl;
+        return false;
+    }
+
+    std::string existingFilterName;
     // Remove this content filtered topic from the domain if it exists
     if (topicDesc && m_domainParticipant)
     {
+        existingFilterName = topicDesc->get_name();
+
+        std::cout << "existingFilterName " << existingFilterName << std::endl;
+
         for (auto iter = topicGroup->filteredTopics.begin();
             iter != topicGroup->filteredTopics.end();
             ++iter)
@@ -965,10 +990,17 @@ bool DDSManager::replaceFilter(const std::string& topicName,
                 continue;
             }
 
-            m_domainParticipant->delete_contentfilteredtopic(topicDesc);
+            return_code = m_domainParticipant->delete_contentfilteredtopic(topicDesc);
+            if (return_code == DDS::RETCODE_OK)
+            {
             iter->second = nullptr;
             topicDesc = nullptr;
             topicGroup->filteredTopics.erase(iter);
+            }
+            else
+            {
+                std::cerr << "domain participant failed on delete_contentfilteredtopic, return_code:  " << return_code << std::endl;
+            }
             break;
         }
     }
@@ -979,19 +1011,25 @@ bool DDSManager::replaceFilter(const std::string& topicName,
     subscriber->delete_datareader(dataReader);
     DDS::TopicDescription* targetTopic = nullptr;
 
-
     // Create a new filtered topic if requested
     if (!filter.empty())
     {
         // The topic filter name must be unique or it will fail on the
         // second time it's created
-        static int counter = 0;
+        int counter = 0;
+        if (!existingFilterName.empty())
+        {
+            std::size_t found = existingFilterName.find_last_of("_");
+            std::string count_string = existingFilterName.substr(found + 1);
+            counter = std::stoi(count_string);
+        }
         ++counter;
         const std::string filterName =
             topicName + "_" +
             readerName + "_" +
             std::to_string(counter);
 
+        //Create the content filter with no swappable params
         const DDS::StringSeq noParams;
         DDS::ContentFilteredTopic_var filteredTopic =
             m_domainParticipant->create_contentfilteredtopic(
@@ -1011,7 +1049,17 @@ bool DDSManager::replaceFilter(const std::string& topicName,
 
             return false;
         }
+        else
+        {
+            std::cerr << "Success in updating content filtered topic '"
+                << topicName
+                << "' with the filter ["
+                << filter
+                << "]"
+                << std::endl;
+        }
 
+        // Save of content filter 
         topicGroup->filteredTopics[filterName] = filteredTopic;
         targetTopic = filteredTopic;
     }
@@ -1023,30 +1071,57 @@ bool DDSManager::replaceFilter(const std::string& topicName,
         targetTopic = topicGroup->topic;
     }
 
-    // Create the new data reader
+    // Create the new data reader, but first create a listener for it
     auto readerListener = std::make_unique<GenericReaderListener>();
     readerListener->SetHandler(m_rlHandler);
-    dataReader = topicGroup->subscriber->create_datareader(
-        targetTopic,
-        topicGroup->dataReaderQos,
-        readerListener.get(),
-        DDS::REQUESTED_INCOMPATIBLE_QOS_STATUS |
-        DDS::SUBSCRIPTION_MATCHED_STATUS |
-        DDS::SAMPLE_LOST_STATUS);
 
-    if (!dataReader)
+    if (readerListener)
     {
-        std::cerr << "Error creating data reader for '"
-            << topicName
-            << "'"
-            << std::endl;
+        std::cerr << "Success in creating reader listener" << std::endl;
 
+        // move replaces the original listener with the new listener and since there is no longer an existing
+        // reference to the orginial lister it deletes itself since it is a unique pointer.
+        // This must be done here rather than after the new reader, otherwise there will be duplicate reader
+        // listeners
+
+        auto rlEmplaceRes = topicGroup->m_readerListeners.emplace(readerName, std::move(readerListener));
+
+        //create the new data reader
+
+        dataReader = topicGroup->subscriber->create_datareader(
+            targetTopic,
+            topicGroup->dataReaderQos,
+            rlEmplaceRes.first->second.get(),
+            DDS::INCONSISTENT_TOPIC_STATUS |
+            DDS::REQUESTED_INCOMPATIBLE_QOS_STATUS |
+            DDS::SUBSCRIPTION_MATCHED_STATUS |
+            DDS::SAMPLE_LOST_STATUS);
+
+        if (!dataReader)
+        {
+            std::cerr << "Error creating data reader for '"
+                << topicName
+                << "'"
+                << std::endl;
+
+            return false;
+        }
+        else
+        {
+            std::cerr << "Success in creating data reader for '"
+                << topicName
+                << "'"
+                << std::endl;
+        }
+    }
+    else
+    {
+        std::cerr << "Failure in creating reader listener" << std::endl;
         return false;
     }
 
     // Store the data reader with the reference name
     topicGroup->readers[readerName] = dataReader;
-    topicGroup->m_readerListeners.emplace(readerName, std::move(readerListener));
     lock.unlock();
 
     // Restart the emitter thread with the new reader if it existed
@@ -1059,6 +1134,78 @@ bool DDSManager::replaceFilter(const std::string& topicName,
     return true;
 
 } // End DDSManager::replaceFilter
+
+bool DDSManager::replaceFilterParams(const std::string& topicName,
+    const std::string& readerName,
+    const DDS::StringSeq &filterParams)
+{
+
+    // Make sure the data reader name is valid
+    if (readerName.empty())
+    {
+        std::cerr << "Error replacing topic filter for '"
+            << topicName
+            << "'. The reader name must not be empty."
+            << std::endl;
+
+        return false;
+    }
+
+
+    decltype(m_sharedLock) lock(m_topicMutex);
+    // Has the subscriber already been registered?
+    DDS::Subscriber_var subscriber = getSubscriber(topicName);
+    if (!subscriber)
+    {
+        std::cerr << "Error replacing topic filter for '"
+            << topicName
+            << "'. The subscriber has not been created."
+            << std::endl;
+
+        return false;
+    }
+
+    // Make sure this data reader exists
+    DDS::DataReader_var dataReader = getReader(topicName, readerName);
+    if (!dataReader)
+    {
+        std::cerr << "Error replacing topic filter for '"
+            << topicName
+            << "'. The data reader named '"
+            << readerName
+            << "' does not exist."
+            << std::endl;
+
+        return false;
+    }
+
+    // Get the ContentFilteredTopic
+    std::shared_ptr<TopicGroup> topicGroup = m_topics[topicName];
+
+
+    DDS::TopicDescription_var topic = dataReader->get_topicdescription();
+    DDS::ContentFilteredTopic_var topicDesc = DDS::ContentFilteredTopic::_narrow(topic);
+    bool status = false;
+
+    // Update this content filtered topic if it exists
+    if (topicDesc)
+    {
+        for (auto iter = topicGroup->filteredTopics.begin();
+            iter != topicGroup->filteredTopics.end();
+            ++iter)
+        {
+            if (topicDesc == iter->second)
+            {
+                if (iter->second->set_expression_parameters(filterParams) == DDS::RETCODE_OK)
+                {
+                    status = true;
+                }
+                    break;
+            }
+        }
+    }
+    return status;
+}
 
 
 //------------------------------------------------------------------------------

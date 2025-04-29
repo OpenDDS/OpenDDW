@@ -312,9 +312,6 @@ private:
     /// The data reader for the target DDS topic.
     DDS::DataReader_var m_reader;
 
-    /// Is the thread running
-    bool m_running = false;
-
     /// The data reader thread
     std::thread m_dataThread;
 

@@ -162,7 +162,25 @@ public:
      */
     bool createSubscriber(const std::string& topicName,
                           const std::string& readerName,
-                          const std::string& filter = "");
+                          const std::string& filter = "",
+                          const DDS::StringSeq &filterParams = DDS::StringSeq());
+
+    /**
+    * @brief Replace the content filter  parameters for a given topic.
+    * @details This method lets the user swap out paramaters of the filter while leaving operators intact.  This is a less disruptive way of
+    * changing filtering and it does not make the reader appear as a late joiner like the replaceFilter method does. If the user wants
+    * to swap parameters then a filter that supports swappable parameter must first be specified in the createSubscriber or createPublisherSubscriber
+    * methods. If the opendds.ini file has "DCPSPublisherContentFilter=0" set then filtering is on the subscriber only
+    * and never get communiciated to the publisher. Publisher filtering may be preferred as a way to eliminate uneeded NW traffic
+    * depending on use case.
+    * @param[in] topicName The name of the topic.
+    * @param[in] readerName Unique data reader name per topic.
+    * @param[in] filter parameters to be swappped in the data filter.
+    * @return True if the operation was successful; false otherwise.
+    */
+    bool replaceFilterParams(const std::string & topicName,
+        const std::string & readerName,
+        const DDS::StringSeq &filterParams);
 
     /**
      * @brief Create a new topic publisher.
@@ -180,7 +198,8 @@ public:
      */
     bool createPublisherSubscriber(const std::string& topicName,
                                    const std::string& readerName,
-                                   const std::string& filter = "");
+                                   const std::string& filter = "",
+                                   const DDS::StringSeq &filterParams = DDS::StringSeq());
 
     /**
      * @brief Read a single data sample for a given topic.
@@ -276,6 +295,11 @@ public:
 
     /**
      * @brief Replace the content filter for a given topic.
+     * @details This method replaces the complete content filter (operators and paramters) and does so by tearing down
+     * the reader, listener and content filter and then reconstructing them.  This has the affect of making the reader appear as a late joiner
+     * to the publisher. If the opendds.ini file has "DCPSPublisherContentFilter=0" set then filtering is on the subscriber only
+     * and never get communiciated to the publisher. Publisher filtering may be preferred as a way to eliminate uneeded NW traffic
+     * depending on use case.
      * @remarks This method is slow, so it should be used sparingly. Use the
      *          filter parameter in takeSample or takeAllSamples when the
      *          filter must change often.
