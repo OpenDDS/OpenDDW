@@ -641,7 +641,7 @@ bool DDSManager::createSubscriber(const std::string& topicName,
     // Create a new filtered topic if requested
     if (!filter.empty())
     {
-        const std::string filterName = topicName + "_" + readerName + "_" + std::to_string(0);
+        const std::string filterName = topicName + "_" + readerName + "_0";
         DDS::ContentFilteredTopic_var filteredTopic =
             m_domainParticipant->create_contentfilteredtopic(
                 filterName.c_str(),
