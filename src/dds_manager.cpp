@@ -1194,11 +1194,7 @@ bool DDSManager::replaceFilterParams(const std::string& topicName,
             iter != topicGroup->filteredTopics.end();
             ++iter)
         {
-            if (topicDesc != iter->second)
-            {
-                continue;
-            }
-            else
+            if (topicDesc == iter->second)
             {
                 if (iter->second->set_expression_parameters(filterParams) == DDS::RETCODE_OK)
                 {
