@@ -163,7 +163,7 @@ public:
     bool createSubscriber(const std::string& topicName,
                           const std::string& readerName,
                           const std::string& filter = "",
-                          const DDS::StringSeq filterParams = DDS::StringSeq());
+                          const DDS::StringSeq &filterParams = DDS::StringSeq());
 
     /**
     * @brief Replace the content filter  parameters for a given topic.
@@ -180,7 +180,7 @@ public:
     */
     bool replaceFilterParams(const std::string & topicName,
         const std::string & readerName,
-        const DDS::StringSeq filterParams);
+        const DDS::StringSeq &filterParams);
 
     /**
      * @brief Create a new topic publisher.
@@ -199,7 +199,7 @@ public:
     bool createPublisherSubscriber(const std::string& topicName,
                                    const std::string& readerName,
                                    const std::string& filter = "",
-                                   const DDS::StringSeq filterParams = DDS::StringSeq());
+                                   const DDS::StringSeq &filterParams = DDS::StringSeq());
 
     /**
      * @brief Read a single data sample for a given topic.
