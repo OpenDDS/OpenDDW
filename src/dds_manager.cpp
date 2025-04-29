@@ -952,9 +952,8 @@ bool DDSManager::replaceFilter(const std::string& topicName,
     }
 
 
-    DDS::ContentFilteredTopic* topicDesc =
-        dynamic_cast<DDS::ContentFilteredTopic*>
-        (dataReader->get_topicdescription());
+    DDS::TopicDescription_var topic = dataReader->get_topicdescription();
+    DDS::ContentFilteredTopic_var topicDesc = DDS::ContentFilteredTopic::_narrow(topic);
 
     // We have to destroy the current data reader before building a new one
     // The first step is to delete the contained entities (deletes all the ReadConditions and QueryConditions)
@@ -1184,10 +1183,8 @@ bool DDSManager::replaceFilterParams(const std::string& topicName,
     std::shared_ptr<TopicGroup> topicGroup = m_topics[topicName];
 
 
-    DDS::ContentFilteredTopic* topicDesc =
-        dynamic_cast<DDS::ContentFilteredTopic*>
-        (dataReader->get_topicdescription());
-
+    DDS::TopicDescription_var topic = dataReader->get_topicdescription();
+    DDS::ContentFilteredTopic_var topicDesc = DDS::ContentFilteredTopic::_narrow(topic);
     bool status = false;
 
     // Update this content filtered topic if it exists
