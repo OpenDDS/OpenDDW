@@ -1,9 +1,9 @@
-# idl2library(IDLS <files> [BUILD_STATIC])
+# idl2library(IDLS <files> [BUILD_STATIC] [INSTALL_OUTPUT])
 # Generate a shared or static library for each IDL in a list.
 #
-# Example:
+# Examples:
 #           idl2library(IDLS idl/example.idl idl/std_doc.idl)
-#           idl2library(IDLS idl/example.idl idl/std_doc.idl BUILD_STATIC)
+#           idl2library(IDLS idl/example.idl idl/std_doc.idl BUILD_STATIC INSTALL_OUTPUT)
 #
 
 cmake_minimum_required(VERSION 3.20)
@@ -48,10 +48,11 @@ function(find_idl_dependencies input_file)
 endfunction()
 
 function(idl2library)
-    set(options BUILD_STATIC)
+    set(options BUILD_STATIC INSTALL_OUTPUT)
+    set(singleValueArgs)
     set(multiValueArgs IDLS)
 
-    cmake_parse_arguments(idl2library "BUILD_STATIC" "" "IDLS" ${ARGN})
+    cmake_parse_arguments(PARSE_ARGV 0 idl2library "${options}" "${singleValueArgs}" "${multiValueArgs}")
 
     if (${idl2library_BUILD_STATIC})
         message("Configured to build static libraries.")
@@ -192,11 +193,44 @@ function(idl2library)
         # Group the IDL projects together
         set_target_properties(${current_idl_target} PROPERTIES FOLDER IDL)
         target_compile_definitions(${current_idl_target} PUBLIC _HAS_AUTO_PTR_ETC=1 _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
+            
+        #Set the PUBLIC_HEADER for the target
+        if (${idl2library_INSTALL_OUTPUT})
+            get_target_property(HEADER_DIR ${current_idl_target} OPENDDS_GENERATED_DIRECTORY)
+            string(REPLACE "_idl" "" baseName "${HEADER_DIR}/${current_idl_target}")
+            
+            get_property(all_public_headers TARGET ${current_idl_target} PROPERTY PUBLIC_HEADER)
+            
+            list(APPEND all_public_headers "${baseName}TypeSupportImpl.h")
+            list(APPEND all_public_headers "${baseName}TypeSupportC.h")
+            list(APPEND all_public_headers "${baseName}TypeSupportC.inl")
+            list(APPEND all_public_headers "${baseName}TypeSupportS.h")
+            list(APPEND all_public_headers "${baseName}C.h")
+            list(APPEND all_public_headers "${baseName}S.h")
+            list(APPEND all_public_headers "${baseName}C.inl")
+            
+            set_property(TARGET ${current_idl_target} PROPERTY PUBLIC_HEADER ${all_public_headers})
+            
+            target_include_directories(${current_idl_target} PUBLIC
+                 $<INSTALL_INTERFACE:include>
+            )
+            
+            # Add each idl to the project target list for export and make them exportable
+            LIST(APPEND PROJECT_TARGET_LIST ${current_idl_target})
+            install(TARGETS ${current_idl_target}
+                EXPORT ${PROJECT_NAME}
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
+                PUBLIC_HEADER DESTINATION include
+            )
+            unset(all_public_headers)
+            
+        endif()
 
         # Add this project to the IDL list so it's only loaded 1x
         list(APPEND IDL_TARGETS "${current_idl_target}")
         list(APPEND IDL_RUNTIMES "$<TARGET_FILE:${current_idl_target}>")
-
+        
         if(USING_INSTALL_HELPER)
             SET_NAME_PROPERTIES(${current_idl_target})
         else()
@@ -204,7 +238,7 @@ function(idl2library)
                 set_target_properties(${current_idl_target} PROPERTIES DEBUG_OUTPUT_NAME ${current_idl_target}d)
                 set_target_properties(${current_idl_target} PROPERTIES RELEASE_OUTPUT_NAME ${current_idl_target})
                 set_target_properties(${current_idl_target} PROPERTIES RELWITHDEBINFO_OUTPUT_NAME ${current_idl_target})
-
+        
                 # Name PDBs appropriately
                 set_target_properties(${current_idl_target} PROPERTIES COMPILE_PDB_NAME_DEBUG ${current_idl_target}d)
                 set_target_properties(${current_idl_target} PROPERTIES COMPILE_PDB_NAME_RELWITHDEBINFO ${current_idl_target})
