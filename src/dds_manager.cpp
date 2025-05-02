@@ -393,11 +393,10 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
 
             newRtpsTransport->max_packet_size(defaultRtpsTransport->max_packet_size());
             newRtpsTransport->max_samples_per_packet(defaultRtpsTransport->max_samples_per_packet());
-            newRtpsTransport->multicast_group_address(defaultRtpsTransport->multicast_group_address(
-#if OPENDDS_VERSION_AT_LEAST(3, 27, 0)
-              domainID
-#endif
-            ));
+            auto addr = defaultRtpsTransport->multicast_group_address(domainID);
+            addr.set_port_number(rtpsPort);
+            newRtpsTransport->multicast_group_address(addr);
+            
             newRtpsTransport->multicast_interface_ = (defaultRtpsTransport->multicast_interface_);
             newRtpsTransport->nak_depth_ = defaultRtpsTransport->nak_depth_;
             newRtpsTransport->nak_response_delay_ = defaultRtpsTransport->nak_response_delay_;
@@ -411,8 +410,7 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
             newRtpsTransport->ttl_ = defaultRtpsTransport->ttl_;
             newRtpsTransport->use_multicast_ = defaultRtpsTransport->use_multicast_;
 
-            OpenDDS::DCPS::NetworkAddress rtps_multicast_addr = OpenDDS::DCPS::NetworkAddress(rtpsPort, "239.255.0.2");
-            newRtpsTransport->multicast_group_address(rtps_multicast_addr);
+
             newConfig->sorted_insert(newRtpsTransport);
             //std::cout << "Transport config: " << std::endl;
             //std::cout << newTransport->dump_to_str() << std::endl;
