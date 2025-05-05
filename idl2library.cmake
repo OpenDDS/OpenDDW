@@ -1,9 +1,9 @@
-# idl2library(IDLS <files> [BUILD_STATIC])
+# idl2library(IDLS <files> [BUILD_STATIC] [INSTALL_OUTPUT])
 # Generate a shared or static library for each IDL in a list.
 #
-# Example:
+# Examples:
 #           idl2library(IDLS idl/example.idl idl/std_doc.idl)
-#           idl2library(IDLS idl/example.idl idl/std_doc.idl BUILD_STATIC)
+#           idl2library(IDLS idl/example.idl idl/std_doc.idl BUILD_STATIC INSTALL_OUTPUT)
 #           idl2library(IDLS idl/example.idl idl/std_doc.idl INCLUDE_DIRS "${PATH_TO_STD_QOS_IDL}/idl/")
 #
 
@@ -49,7 +49,7 @@ function(find_idl_dependencies input_file)
 endfunction()
 
 function(idl2library)
-    set(options BUILD_STATIC)
+    set(options BUILD_STATIC INSTALL_OUTPUT)
     set(singleValueArgs)
     set(multiValueArgs IDLS INCLUDE_DIRS)
 
@@ -189,7 +189,7 @@ function(idl2library)
             add_library(${current_idl_target} SHARED)
         endif()
 
-        opendds_target_sources(${current_idl_target}
+        opendds_target_sources(${current_idl_target} PUBLIC
             ${${current_idl_target}_RELPATH}
             OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete
             TAO_IDL_OPTIONS ${current_idl_include_opts}
@@ -203,6 +203,21 @@ function(idl2library)
         # Group the IDL projects together
         set_target_properties(${current_idl_target} PROPERTIES FOLDER IDL)
         target_compile_definitions(${current_idl_target} PUBLIC _HAS_AUTO_PTR_ETC=1 _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
+            
+        #Set the PUBLIC_HEADER for the target
+        if (${idl2library_INSTALL_OUTPUT})
+            opendds_install_interface_files(${current_idl_target})
+
+            # Add each idl to the project target list for export and make them exportable
+            LIST(APPEND PROJECT_TARGET_LIST ${current_idl_target})
+            install(TARGETS ${current_idl_target}
+                EXPORT ${PROJECT_NAME}
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib
+                PUBLIC_HEADER DESTINATION include
+            )
+
+        endif()
 
         # Add this project to the IDL list so it's only loaded 1x
         list(APPEND IDL_TARGETS "${current_idl_target}")
