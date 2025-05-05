@@ -4,6 +4,7 @@
 # Examples:
 #           idl2library(IDLS idl/example.idl idl/std_doc.idl)
 #           idl2library(IDLS idl/example.idl idl/std_doc.idl BUILD_STATIC INSTALL_OUTPUT)
+#           idl2library(IDLS idl/example.idl idl/std_doc.idl INCLUDE_DIRS "${PATH_TO_STD_QOS_IDL}/idl/")
 #
 
 cmake_minimum_required(VERSION 3.20)
@@ -50,7 +51,7 @@ endfunction()
 function(idl2library)
     set(options BUILD_STATIC INSTALL_OUTPUT)
     set(singleValueArgs)
-    set(multiValueArgs IDLS)
+    set(multiValueArgs IDLS INCLUDE_DIRS)
 
     cmake_parse_arguments(PARSE_ARGV 0 idl2library "${options}" "${singleValueArgs}" "${multiValueArgs}")
 
@@ -69,6 +70,11 @@ function(idl2library)
             set(IDL_ARG "${IDL_ARG}.idl")
         endif()
         list(APPEND IDL_WISHLIST ${IDL_ARG})
+    endforeach()
+
+    unset(IDL_DIR_WISHLIST)
+    foreach(IDL_DIR_ARG ${idl2library_INCLUDE_DIRS})
+        list(APPEND IDL_DIR_WISHLIST ${IDL_DIR_ARG})
     endforeach()
 
     option(OPENDDS_CPP11_IDL_MAPPING "Use C++11 IDL mapping" OFF)
@@ -163,6 +169,10 @@ function(idl2library)
             endif()
         endforeach()
         list(REMOVE_DUPLICATES current_idl_include_opts)
+
+        foreach(include_dir ${IDL_DIR_WISHLIST})
+            list(APPEND current_idl_include_opts "-I${include_dir}")
+        endforeach()
 
         if(OPENDDS_CPP11_IDL_MAPPING)
             list(APPEND current_idl_include_opts "-Lc++11 ")
