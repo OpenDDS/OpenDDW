@@ -189,7 +189,7 @@ function(idl2library)
             add_library(${current_idl_target} SHARED)
         endif()
 
-        opendds_target_sources(${current_idl_target}
+        opendds_target_sources(${current_idl_target} PUBLIC
             ${${current_idl_target}_RELPATH}
             OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete
             TAO_IDL_OPTIONS ${current_idl_include_opts}
@@ -206,25 +206,8 @@ function(idl2library)
             
         #Set the PUBLIC_HEADER for the target
         if (${idl2library_INSTALL_OUTPUT})
-            get_target_property(HEADER_DIR ${current_idl_target} OPENDDS_GENERATED_DIRECTORY)
-            string(REPLACE "_idl" "" baseName "${HEADER_DIR}/${current_idl_target}")
-            
-            get_property(all_public_headers TARGET ${current_idl_target} PROPERTY PUBLIC_HEADER)
-            
-            list(APPEND all_public_headers "${baseName}TypeSupportImpl.h")
-            list(APPEND all_public_headers "${baseName}TypeSupportC.h")
-            list(APPEND all_public_headers "${baseName}TypeSupportC.inl")
-            list(APPEND all_public_headers "${baseName}TypeSupportS.h")
-            list(APPEND all_public_headers "${baseName}C.h")
-            list(APPEND all_public_headers "${baseName}S.h")
-            list(APPEND all_public_headers "${baseName}C.inl")
-            
-            set_property(TARGET ${current_idl_target} PROPERTY PUBLIC_HEADER ${all_public_headers})
-            
-            target_include_directories(${current_idl_target} PUBLIC
-                 $<INSTALL_INTERFACE:include>
-            )
-            
+            opendds_install_interface_files(${current_idl_target})
+
             # Add each idl to the project target list for export and make them exportable
             LIST(APPEND PROJECT_TARGET_LIST ${current_idl_target})
             install(TARGETS ${current_idl_target}
@@ -233,14 +216,13 @@ function(idl2library)
                 ARCHIVE DESTINATION lib
                 PUBLIC_HEADER DESTINATION include
             )
-            unset(all_public_headers)
-            
+
         endif()
 
         # Add this project to the IDL list so it's only loaded 1x
         list(APPEND IDL_TARGETS "${current_idl_target}")
         list(APPEND IDL_RUNTIMES "$<TARGET_FILE:${current_idl_target}>")
-        
+
         if(USING_INSTALL_HELPER)
             SET_NAME_PROPERTIES(${current_idl_target})
         else()
@@ -248,7 +230,7 @@ function(idl2library)
                 set_target_properties(${current_idl_target} PROPERTIES DEBUG_OUTPUT_NAME ${current_idl_target}d)
                 set_target_properties(${current_idl_target} PROPERTIES RELEASE_OUTPUT_NAME ${current_idl_target})
                 set_target_properties(${current_idl_target} PROPERTIES RELWITHDEBINFO_OUTPUT_NAME ${current_idl_target})
-        
+
                 # Name PDBs appropriately
                 set_target_properties(${current_idl_target} PROPERTIES COMPILE_PDB_NAME_DEBUG ${current_idl_target}d)
                 set_target_properties(${current_idl_target} PROPERTIES COMPILE_PDB_NAME_RELWITHDEBINFO ${current_idl_target})
