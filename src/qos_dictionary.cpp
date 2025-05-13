@@ -14,6 +14,12 @@
 #include <iostream>
 #include <string>
 
+//gcc13 warnings
+#ifndef WIN32
+#  pragma GCC diagnostic ignored "-Warray-bounds"
+#  pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 namespace
 {
 
