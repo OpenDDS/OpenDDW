@@ -1,12 +1,12 @@
 #ifdef WIN32
-#pragma warning(push, 0)  //No DDS warnings
+#  pragma warning(push, 0)  //No DDS warnings
 #endif
 
 #include <dds/DdsDcpsInfrastructureC.h>
 #include <dds/DCPS/Marked_Default_Qos.h>
 
 #ifdef WIN32
-#pragma warning(pop)
+#  pragma warning(pop)
 #endif
 
 #include "qos_dictionary.h"
@@ -16,8 +16,12 @@
 
 //gcc13 warnings
 #if __GNUC__ && defined( __has_warning )
-#  pragma GCC diagnostic ignored "-Warray-bounds"
-#  pragma GCC diagnostic ignored "-Wstringop-overflow"
+#  if __has_warning( "-Warray-bounds" )
+#    pragma GCC diagnostic ignored "-Warray-bounds"
+#  endif
+#  if __has_warning( "-Wstringop-overflow" )
+#      pragma GCC diagnostic ignored "-Wstringop-overflow"
+#  endif
 #endif
 
 namespace
