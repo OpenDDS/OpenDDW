@@ -15,7 +15,7 @@
 #include <string>
 
 //gcc13 warnings
-#ifndef WIN32
+#if defined(__GNUC__)
 #  pragma GCC diagnostic ignored "-Warray-bounds"
 #  pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
