@@ -15,7 +15,7 @@
 #include <string>
 
 //gcc13 warnings
-#if defined(__GNUC__)
+#if __GNUC__ && defined( __has_warning )
 #  pragma GCC diagnostic ignored "-Warray-bounds"
 #  pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
