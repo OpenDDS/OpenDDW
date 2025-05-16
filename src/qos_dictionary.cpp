@@ -14,14 +14,10 @@
 #include <iostream>
 #include <string>
 
-//gcc13 warnings
-#if __GNUC__ && defined( __has_warning )
-#  if __has_warning( "-Warray-bounds" )
+//gcc13 warnings from OpenDDS
+#if !defined(__clang__) && !defined(WIN32)
 #    pragma GCC diagnostic ignored "-Warray-bounds"
-#  endif
-#  if __has_warning( "-Wstringop-overflow" )
 #      pragma GCC diagnostic ignored "-Wstringop-overflow"
-#  endif
 #endif
 
 namespace
