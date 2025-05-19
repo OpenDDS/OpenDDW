@@ -17,7 +17,7 @@
 //gcc13 warnings from OpenDDS
 #if !defined(__clang__) && !defined(WIN32)
 #    pragma GCC diagnostic ignored "-Warray-bounds"
-#      pragma GCC diagnostic ignored "-Wstringop-overflow"
+#    pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 
 namespace
