@@ -194,6 +194,7 @@ function(idl2library)
             OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete
             TAO_IDL_OPTIONS ${current_idl_include_opts}
             INCLUDE_BASE ${${current_idl_target}_ABSDIR}
+            FOLDER IDL/generated
         )
         target_link_libraries(${current_idl_target}
            ${IDL_TARGET_DEPENDENCIES}
@@ -202,7 +203,6 @@ function(idl2library)
 
         # Group the IDL projects together
         set_target_properties(${current_idl_target} PROPERTIES FOLDER IDL)
-        set_target_properties(_opendds_codegen_1_for_${current_idl_target} PROPERTIES FOLDER IDL/generated)
         target_compile_definitions(${current_idl_target} PUBLIC _HAS_AUTO_PTR_ETC=1 _SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
             
         #Set the PUBLIC_HEADER for the target
