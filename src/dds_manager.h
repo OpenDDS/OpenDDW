@@ -485,7 +485,7 @@ public:
     bool cleanUpTopicsForOneManager();
 
     /**
-     * @brief Enable security for opendds.  OpenDDS must be build with security or the function will only log a warning.
+     * @brief Enable security for OpenDDS.  OpenDDS must be built with security or the function will only log a warning.
      * @param[in] authCaFile Identity CA certificate
      * @param[in] permCaFile Permissions CA certificate
      * @param[in] idCertFile Identity certificate file
