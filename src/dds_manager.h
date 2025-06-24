@@ -493,7 +493,7 @@ public:
      * @param[in] governanceFile Governance document signed by permissions CA using its private key
      * @param[in] permissionsFile Permissions document signed by permissions CA using its private key
      */
-    void EnableSecuirty(const std::string &authCaFile, const std::string &permCaFile, const std::string &idCertFile,
+    void EnableSecurity(const std::string &authCaFile, const std::string &permCaFile, const std::string &idCertFile,
         const std::string &idKeyFile, const std::string &governanceFile, const std::string &permissionsFile);
 
 protected:
