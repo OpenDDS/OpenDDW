@@ -194,6 +194,7 @@ function(idl2library)
             OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete
             TAO_IDL_OPTIONS ${current_idl_include_opts}
             INCLUDE_BASE ${${current_idl_target}_ABSDIR}
+            FOLDER IDL/generated
         )
         target_link_libraries(${current_idl_target}
            ${IDL_TARGET_DEPENDENCIES}
