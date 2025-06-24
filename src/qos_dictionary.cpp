@@ -1,18 +1,24 @@
 #ifdef WIN32
-#pragma warning(push, 0)  //No DDS warnings
+#  pragma warning(push, 0)  //No DDS warnings
 #endif
 
 #include <dds/DdsDcpsInfrastructureC.h>
 #include <dds/DCPS/Marked_Default_Qos.h>
 
 #ifdef WIN32
-#pragma warning(pop)
+#  pragma warning(pop)
 #endif
 
 #include "qos_dictionary.h"
 
 #include <iostream>
 #include <string>
+
+//gcc13 warnings from OpenDDS
+#if !defined(__clang__) && !defined(WIN32)
+#    pragma GCC diagnostic ignored "-Warray-bounds"
+#    pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
 
 namespace
 {
