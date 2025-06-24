@@ -484,6 +484,18 @@ public:
 
     bool cleanUpTopicsForOneManager();
 
+    /**
+     * @brief Enable security for opendds.  OpenDDS must be build with security or the function will only log a warning.
+     * @param[in] authCaFile Identity CA certificate
+     * @param[in] permCaFile Permissions CA certificate
+     * @param[in] idCertFile Identity certificate file
+     * @param[in] idKeyFile Identity certificate private key
+     * @param[in] governanceFile Governance document signed by permissions CA using its private key
+     * @param[in] permissionsFile Permissions document signed by permissions CA using its private key
+     */
+    void EnableSecuirty(const std::string &authCaFile, const std::string &permCaFile, const std::string &idCertFile,
+        const std::string &idKeyFile, const std::string &governanceFile, const std::string &permissionsFile);
+
 protected:
     std::function<void(LogMessageType mt, const std::string& message)> m_messageHandler;
 
@@ -553,6 +565,15 @@ private:
     int m_domainID;
 
     std::string m_config;
+    
+    //Security parameters
+    bool m_enableSecurity = false;
+    std::string m_authCaFile;
+    std::string m_permCaFile;
+    std::string m_idCertFile;
+    std::string m_idKeyFile;
+    std::string m_governanceFile;
+    std::string m_permissionsFile;
 
     //Thread safety mutex.
 
