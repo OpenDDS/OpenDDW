@@ -145,7 +145,7 @@ bool DDSManager::cleanUpTopicsForOneManager()
     return allClear;
 }
 
-void DDSManager::EnableSecuirty(const std::string& authCaFile, const std::string& permCaFile, const std::string& idCertFile,
+void DDSManager::EnableSecurity(const std::string& authCaFile, const std::string& permCaFile, const std::string& idCertFile,
     const std::string& idKeyFile, const std::string& governanceFile, const std::string& permissionsFile)
 {
     const std::string filePrefix("file:");
