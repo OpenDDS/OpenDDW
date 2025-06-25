@@ -92,9 +92,9 @@ set(OPENDDS_TARGETS
   OpenDDS::Rtps_Udp
 )
 
-if (OPENDDS_SECURITY)
-	list(APPEND OPENDDS_TARGETS OpenDDS::Security)
-endif (OPENDDS_SECURITY)
+if(OPENDDS_SECURITY)
+  list(APPEND OPENDDS_TARGETS OpenDDS::Security)
+endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
