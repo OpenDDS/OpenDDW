@@ -14,6 +14,9 @@
 #include <dds/DCPS/transport/rtps_udp/RtpsUdpInst_rch.h>
 #ifdef ACE_AS_STATIC_LIBS
 #  include <dds/DCPS/transport/rtps_udp/RtpsUdp.h>
+#  ifdef OPENDDS_SECURITY 
+#    include <dds/DCPS/security/BuiltInPlugins.h> 
+#  endif 
 #endif
 #include <dds/DCPS/Service_Participant.h>
 #include <dds/DCPS/RTPS/RtpsDiscovery.h>
@@ -35,8 +38,17 @@
 #include "platformIndependent.h"
 #include "std_qosC.h"
 
-//Helper function to get the address list for a sequence
-std::string GetAddressInfo(const OpenDDS::DCPS::TransportLocatorSeq& info)
+//Append a property value
+inline void appendProp(DDS::PropertySeq& props, const char* name, const std::string& value)
+{
+    const DDS::Property_t prop = { name, value.c_str(), false };
+    const unsigned int len = props.length();
+    props.length(len + 1);
+    props[len] = prop;
+} 
+
+//Get the address list for a sequence
+inline std::string GetAddressInfo(const OpenDDS::DCPS::TransportLocatorSeq& info)
 {
     std::string strAddress;
     for (unsigned int idx = 0; idx != info.length(); ++idx) {
@@ -131,6 +143,19 @@ bool DDSManager::cleanUpTopicsForOneManager()
     m_topics.clear();  //This is a fallback, topics should already be cleared by the unregisterTopic() calls.
 
     return allClear;
+}
+
+void DDSManager::EnableSecurity(const std::string& authCaFile, const std::string& permCaFile, const std::string& idCertFile,
+    const std::string& idKeyFile, const std::string& governanceFile, const std::string& permissionsFile)
+{
+    const std::string filePrefix("file:");
+    m_enableSecurity = true;
+    m_authCaFile = filePrefix + authCaFile;
+    m_permCaFile = filePrefix + permCaFile;
+    m_idCertFile = filePrefix + idCertFile;
+    m_idKeyFile = filePrefix + idKeyFile;
+    m_governanceFile = filePrefix + governanceFile;
+    m_permissionsFile = filePrefix + permissionsFile;
 }
 
 //------------------------------------------------------------------------------
@@ -273,6 +298,23 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
     DDS::ReturnCode_t status = domainFactory->get_default_participant_qos(domainQos);
     DDSManager::checkStatus(status, "DDS::DomainParticipant::get_default_participant_qos");
 
+
+    if (m_enableSecurity) {
+#if defined(OPENDDS_SECURITY)
+        TheServiceParticipant->set_security(true);
+        DDS::PropertySeq& props = domainQos.property.value;
+        appendProp(props, "dds.sec.auth.identity_ca", m_authCaFile);
+        appendProp(props, "dds.sec.auth.identity_certificate", m_idCertFile);
+        appendProp(props, "dds.sec.auth.private_key", m_idKeyFile);
+        appendProp(props, "dds.sec.access.permissions_ca", m_permCaFile);
+        appendProp(props, "dds.sec.access.governance", m_governanceFile);
+        appendProp(props, "dds.sec.access.permissions", m_permissionsFile);
+#else
+        m_messageHandler(LogMessageType::DDS_WARNING, "Unable to initialize security!  Build OpenDDW with the SECURITY_BUILD definition if you wish to enable security!");
+#endif
+    }
+
+    
     m_domainParticipant = domainFactory->create_participant(
         domainID,
         domainQos,
