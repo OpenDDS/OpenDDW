@@ -25,10 +25,10 @@ jobs:
           - master
           - latest-release
         runner:
+          - windows-2025
           - windows-2022
-          - windows-2019
-          - ubuntu-22.04
           - ubuntu-24.04
+          - ubuntu-22.04
           - macos-14
           - macos-13
 
