@@ -617,6 +617,7 @@ std::string ddsEnumToString(const CORBA::TypeCode* enumTypeCode,
 template <typename TopicType>
 bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs);
 
+#if defined (OPENDDW_PRECPP11)
 /**
  * @brief Initialize a DDS topic to 0.
  * @remarks If we ever have a DDS utility class, this should go in there.
@@ -627,6 +628,7 @@ template <typename TopicType>
 bool ddsInit(TopicType& topicInstance);
 
 void ShutdownDDS();
+#endif
 
 /**
 * @brief Counter of transport instances for each domain since program began

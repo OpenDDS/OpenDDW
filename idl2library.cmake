@@ -77,7 +77,7 @@ function(idl2library)
         list(APPEND IDL_DIR_WISHLIST ${IDL_DIR_ARG})
     endforeach()
 
-    option(OPENDDS_CPP11_IDL_MAPPING "Use C++11 IDL mapping" OFF)
+    option(OPENDDS_NO_CPP11_IDL_MAPPING "Turn off C++11 IDL mapping and use old style opendds." OFF)
     option(OPENDDS_CMAKE_VERBOSE "Print verbose output when loading the OpenDDS Config Package" ON)
 
     find_package(OpenDDS REQUIRED)
@@ -174,10 +174,6 @@ function(idl2library)
             list(APPEND current_idl_include_opts "-I${include_dir}")
         endforeach()
 
-        if(OPENDDS_CPP11_IDL_MAPPING)
-            list(APPEND current_idl_include_opts "-Lc++11 ")
-        endif()
-
         message("Adding library: ${current_idl_target}")
         message("current_idl_include_opts:  ${current_idl_include_opts}")
         message("Dependencies: ${IDL_TARGET_DEPENDENCIES}\n")
@@ -189,9 +185,13 @@ function(idl2library)
             add_library(${current_idl_target} SHARED)
         endif()
 
+        if (NOT OPENDDS_NO_CPP11_IDL_MAPPING)
+            set(extra_idl_options -Lc++11)
+        endif()
+
         opendds_target_sources(${current_idl_target} PUBLIC
             ${${current_idl_target}_RELPATH}
-            OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete
+            OPENDDS_IDL_OPTIONS ${current_idl_include_opts} -Gxtypes-complete ${extra_idl_options}
             TAO_IDL_OPTIONS ${current_idl_include_opts}
             INCLUDE_BASE ${${current_idl_target}_ABSDIR}
             FOLDER IDL/generated
