@@ -535,7 +535,7 @@ bool DDSManager::registerQos(const std::string& topicName, const STD_QOS::QosTyp
         break;
     default:
         std::cerr << "Invalid QoS type of '"
-            << qosType
+            << static_cast<uint32_t>(qosType)
             << "' for "
             << topicName
             << std::endl;
@@ -545,7 +545,7 @@ bool DDSManager::registerQos(const std::string& topicName, const STD_QOS::QosTyp
     }
 
     lock.lock();
-    topicGroup->qosPreset = qosType;
+    topicGroup->qosPreset = static_cast<int>(qosType);
 
     return true;
 

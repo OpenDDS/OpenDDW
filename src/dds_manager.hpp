@@ -112,6 +112,7 @@ bool DDSManager::registerTopic(const std::string& topicName, const STD_QOS::QosT
     // char[8-N] - Serialized CDR topic typecode
 
     // Get the topic typecode and stuff it into a CDR object
+#if defined (OPENDDW_PRECPP11)
     typename OpenDDS::DCPS::DDSTraits<TopicType>::MessageType topicMessageType;
     ddsInit(topicMessageType);
     CORBA::Any topicTypeAny;
@@ -162,7 +163,7 @@ bool DDSManager::registerTopic(const std::string& topicName, const STD_QOS::QosT
             (const unsigned char*)topicTypeCDR.buffer(),
             typeCodeSize);
     }
-
+#endif
 
     // Create the topic
     auto listener = std::make_unique<GenericTopicListener>();
@@ -521,7 +522,7 @@ bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs)
     return (memcmp(blockA.base(), blockB.base(), blockA.length()) == 0);
 }
 
-
+#if defined (OPENDDW_PRECPP11)
 //------------------------------------------------------------------------------
 template <typename TopicType>
 bool ddsInit(TopicType& topicInstance)
@@ -540,7 +541,7 @@ bool ddsInit(TopicType& topicInstance)
     delete[] cdrBuffer;
     return pass;
 }
-
+#endif
 
 //------------------------------------------------------------------------------
 template <typename TopicType>

@@ -173,7 +173,11 @@ public:
     {
         //Most SCE and trainer messages have an Event ID. Most programs can simply set this once
         //and use this function to always make sure it is set.
+#if defined (OPENDDW_PRECPP11)
         message.eventID = m_eventID;
+#else
+        message.eventID(m_eventID);
+#endif
         return Write<T>(message, topicName);
     }
 
@@ -473,8 +477,9 @@ private:
 
 
 //Adding and removing from arrays is not as straightforward with OpenDDS.
-//Here are some template functions to help.
-
+//Here are some template functions to help.  No longer really an issue with
+//c++11.
+#if defined (OPENDDW_PRECPP11)
 template <typename T, typename add>
 void AddToDdsArray(T& arrayInOut, add toAdd)
 {
@@ -566,5 +571,5 @@ bool RemoveFromDdsArray(T& arrayInOut, Tcompare toRemove, TMember memberCompare)
     }
     return foundAlready;
 }
-
+#endif
 #endif

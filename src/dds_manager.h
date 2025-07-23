@@ -595,7 +595,17 @@ private:
 
 }; // End class DDSManager
 
+/**
+ * @brief Return true if the samples are equal; otherwise false.
+ * @remarks If we ever have a DDS utility class, this should go in there.
+ * @param[in] lhs Left sample in compare.
+ * @param[in] rhs Right sample in compare.
+ * @return True if the samples are equal; otherwise false.
+ */
+template <typename TopicType>
+bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs);
 
+#if defined (OPENDDW_PRECPP11)
 /**
  * @brief Get the string for a given enum value.
  * @remarks If we ever have a DDS utility class, this should go in there.
@@ -608,16 +618,6 @@ std::string ddsEnumToString(const CORBA::TypeCode* enumTypeCode,
                                        const unsigned int& enumValue);
 
 /**
- * @brief Return true if the samples are equal; otherwise false.
- * @remarks If we ever have a DDS utility class, this should go in there.
- * @param[in] lhs Left sample in compare.
- * @param[in] rhs Right sample in compare.
- * @return True if the samples are equal; otherwise false.
- */
-template <typename TopicType>
-bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs);
-
-/**
  * @brief Initialize a DDS topic to 0.
  * @remarks If we ever have a DDS utility class, this should go in there.
  * @param[out] topicInstance Set all members of this topic instance to 0.
@@ -625,6 +625,8 @@ bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs);
  */
 template <typename TopicType>
 bool ddsInit(TopicType& topicInstance);
+
+#endif
 
 void ShutdownDDS();
 
