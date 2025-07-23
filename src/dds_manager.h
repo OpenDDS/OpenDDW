@@ -595,18 +595,6 @@ private:
 
 }; // End class DDSManager
 
-
-/**
- * @brief Get the string for a given enum value.
- * @remarks If we ever have a DDS utility class, this should go in there.
- * @remarks This is typically used when creating filters with enum members.
- * @param[in] enumTypeCode Get the string value from this typecode object.
- * @param[in] enumValue The target enum ordinal value.
- * @return The string for a target enum value or empty if an error was found.
- */
-std::string ddsEnumToString(const CORBA::TypeCode* enumTypeCode,
-                                       const unsigned int& enumValue);
-
 /**
  * @brief Return true if the samples are equal; otherwise false.
  * @remarks If we ever have a DDS utility class, this should go in there.
@@ -619,6 +607,17 @@ bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs);
 
 #if defined (OPENDDW_PRECPP11)
 /**
+ * @brief Get the string for a given enum value.
+ * @remarks If we ever have a DDS utility class, this should go in there.
+ * @remarks This is typically used when creating filters with enum members.
+ * @param[in] enumTypeCode Get the string value from this typecode object.
+ * @param[in] enumValue The target enum ordinal value.
+ * @return The string for a target enum value or empty if an error was found.
+ */
+std::string ddsEnumToString(const CORBA::TypeCode* enumTypeCode,
+                                       const unsigned int& enumValue);
+
+/**
  * @brief Initialize a DDS topic to 0.
  * @remarks If we ever have a DDS utility class, this should go in there.
  * @param[out] topicInstance Set all members of this topic instance to 0.
@@ -627,8 +626,9 @@ bool ddsSampleEquals(const TopicType& lhs, const TopicType& rhs);
 template <typename TopicType>
 bool ddsInit(TopicType& topicInstance);
 
-void ShutdownDDS();
 #endif
+
+void ShutdownDDS();
 
 /**
 * @brief Counter of transport instances for each domain since program began
