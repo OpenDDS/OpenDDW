@@ -212,14 +212,14 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
     m_config = config;
 
     // If the user set the path to the DDS config file, use it
-    std::string dds_config_file_str = pi::GetEnvVar("DDS_CONFIG_FILE");
+    std::string dds_config_file_str = OpenDDW::GetEnvVar("DDS_CONFIG_FILE");
     if (dds_config_file_str.empty())
     {
         // Use the current directory of the executable as the default
-        auto ddsConfigPath = pi::GetExecutableDirectory();
+        auto ddsConfigPath = OpenDDW::GetExecutableDirectory();
         ddsConfigPath /= "opendds.ini";
         if (!std::filesystem::exists(ddsConfigPath)) {
-            ddsConfigPath = pi::GetExecutableDirectory();
+            ddsConfigPath = OpenDDW::GetExecutableDirectory();
             ddsConfigPath /= "..";
             ddsConfigPath /= "opendds.ini";
         }
@@ -268,7 +268,7 @@ bool DDSManager::joinDomain(const int& domainID, const std::string& config, std:
     };
 
     // Force using the specified NIC
-    ddsIP = pi::GetEnvVar("DDS_IP");
+    ddsIP = OpenDDW::GetEnvVar("DDS_IP");
     if (ddsIP.empty())
     {
         m_messageHandler(LogMessageType::DDS_INFO, "The 'DDS_IP' environment variable was not set.  Using default NIC for DDS.");

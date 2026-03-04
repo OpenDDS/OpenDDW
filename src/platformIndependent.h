@@ -7,7 +7,7 @@
 #include <mach-o/dyld.h>
 #endif
 
-namespace pi
+namespace OpenDDW
 {
     /// Returns the full path to the executable currently running.
     inline std::filesystem::path GetExecutablePath()
